@@ -635,7 +635,7 @@
         }
         
         // Text analysis functionality
-        function analyzeText() {
+        async function analyzeText() {
             const text = document.getElementById('emailText').value.trim();
             if (!text) {
                 alert('Voer eerst tekst in om te analyseren!');
@@ -644,17 +644,41 @@
             
             const analyzeBtn = event.target;
             const originalText = analyzeBtn.textContent;
-            analyzeBtn.textContent = '⏳ Analyseren...';
+            analyzeBtn.textContent = '⏳ AI Analyseren...';
             analyzeBtn.disabled = true;
             
-            // Simulate AI analysis
-            setTimeout(() => {
-                const analysis = analyzeEmailText(text);
+            try {
+                // Call smart AI analysis
+                const response = await fetch('/api/smart-analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        fileType: 'text'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`AI API error: ${response.status}`);
+                }
+                
+                const analysis = await response.json();
                 showTextAnalysisResult(analysis);
                 
-                analyzeBtn.textContent = originalText;
-                analyzeBtn.disabled = false;
-            }, 1500);
+            } catch (error) {
+                console.error('AI analysis error:', error);
+                
+                // Fallback to pattern matching
+                const fallbackAnalysis = analyzeEmailText(text);
+                showTextAnalysisResult(fallbackAnalysis);
+                
+                alert(`⚠️ AI analyse gefaald, gebruik fallback: ${error.message}`);
+            }
+            
+            analyzeBtn.textContent = originalText;
+            analyzeBtn.disabled = false;
         }
         
         function clearText() {
