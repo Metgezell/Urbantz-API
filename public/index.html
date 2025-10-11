@@ -267,6 +267,17 @@
             </div>
         </div>
         
+        <!-- Test Data Section -->
+        <div class="section">
+            <h3>🧪 Test Data</h3>
+            <div class="form-group">
+                <p>Genereer voorbeeld leveringen voor demo doeleinden:</p>
+                <button type="button" class="btn-small btn-analyze" onclick="generateTestDeliveries()">🎯 Genereer 10 Test Leveringen</button>
+                <button type="button" class="btn-small btn-remove" onclick="clearTestData()">🗑️ Wissen Test Data</button>
+            </div>
+            <div id="testDataResult"></div>
+        </div>
+        
         <form id="urbantzForm">
             <div class="form-group">
                 <label for="apiKey">API Key:</label>
@@ -1027,6 +1038,205 @@
         
         function clearResults() {
             document.getElementById('result').innerHTML = '';
+        }
+        
+        // Test data generation
+        function generateTestDeliveries() {
+            const testDeliveries = [
+                {
+                    taskId: 'TEST-001',
+                    customerRef: 'DEMO-001',
+                    deliveryAddress: {
+                        line1: 'Koningstraat 15, 1000 Brussel',
+                        contactName: 'Jan Janssen',
+                        contactPhone: '+32 2 123 4567'
+                    },
+                    serviceDate: '2025-10-15',
+                    timeWindowStart: '09:00',
+                    timeWindowEnd: '12:00',
+                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
+                    notes: 'Test levering - Demo data',
+                    priority: 'normal'
+                },
+                {
+                    taskId: 'TEST-002',
+                    customerRef: 'DEMO-002',
+                    deliveryAddress: {
+                        line1: 'Grote Markt 8, 2000 Antwerpen',
+                        contactName: 'Maria Verstraeten',
+                        contactPhone: '+32 3 234 5678'
+                    },
+                    serviceDate: '2025-10-15',
+                    timeWindowStart: '13:00',
+                    timeWindowEnd: '16:00',
+                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
+                    notes: 'Test levering - Demo data',
+                    priority: 'normal'
+                },
+                {
+                    taskId: 'TEST-003',
+                    customerRef: 'DEMO-003',
+                    deliveryAddress: {
+                        line1: 'Vrijdagmarkt 22, 9000 Gent',
+                        contactName: 'Piet De Vries',
+                        contactPhone: '+32 9 345 6789'
+                    },
+                    serviceDate: '2025-10-15',
+                    timeWindowStart: '10:00',
+                    timeWindowEnd: '12:00',
+                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
+                    notes: 'Test levering - Demo data',
+                    priority: 'normal'
+                },
+                {
+                    taskId: 'TEST-004',
+                    customerRef: 'DEMO-004',
+                    deliveryAddress: {
+                        line1: 'Bondgenotenlaan 45, 3000 Leuven',
+                        contactName: 'Anna Smets',
+                        contactPhone: '+32 16 456 7890'
+                    },
+                    serviceDate: '2025-10-15',
+                    timeWindowStart: '14:00',
+                    timeWindowEnd: '17:00',
+                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
+                    notes: 'Test levering - Demo data',
+                    priority: 'normal'
+                },
+                {
+                    taskId: 'TEST-005',
+                    customerRef: 'DEMO-005',
+                    deliveryAddress: {
+                        line1: 'Bruul 12, 2800 Mechelen',
+                        contactName: 'Tom Van Damme',
+                        contactPhone: '+32 15 567 8901'
+                    },
+                    serviceDate: '2025-10-15',
+                    timeWindowStart: '08:00',
+                    timeWindowEnd: '10:00',
+                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
+                    notes: 'Test levering - Demo data',
+                    priority: 'normal'
+                },
+                {
+                    taskId: 'TEST-006',
+                    customerRef: 'DEMO-006',
+                    deliveryAddress: {
+                        line1: 'Steenstraat 33, 8000 Brugge',
+                        contactName: 'Lisa Peeters',
+                        contactPhone: '+32 50 678 9012'
+                    },
+                    serviceDate: '2025-10-15',
+                    timeWindowStart: '11:00',
+                    timeWindowEnd: '13:00',
+                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
+                    notes: 'Test levering - Demo data',
+                    priority: 'normal'
+                },
+                {
+                    taskId: 'TEST-007',
+                    customerRef: 'DEMO-007',
+                    deliveryAddress: {
+                        line1: 'Koning Albertstraat 78, 3500 Hasselt',
+                        contactName: 'Mark Janssen',
+                        contactPhone: '+32 11 789 0123'
+                    },
+                    serviceDate: '2025-10-15',
+                    timeWindowStart: '15:00',
+                    timeWindowEnd: '18:00',
+                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
+                    notes: 'Test levering - Demo data',
+                    priority: 'normal'
+                },
+                {
+                    taskId: 'TEST-008',
+                    customerRef: 'DEMO-008',
+                    deliveryAddress: {
+                        line1: 'Doorniksestraat 55, 8500 Kortrijk',
+                        contactName: 'Sofie De Clercq',
+                        contactPhone: '+32 56 890 1234'
+                    },
+                    serviceDate: '2025-10-15',
+                    timeWindowStart: '09:30',
+                    timeWindowEnd: '11:30',
+                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
+                    notes: 'Test levering - Demo data',
+                    priority: 'normal'
+                },
+                {
+                    taskId: 'TEST-009',
+                    customerRef: 'DEMO-009',
+                    deliveryAddress: {
+                        line1: 'Rue de Fer 88, 5000 Namen',
+                        contactName: 'Pierre Dubois',
+                        contactPhone: '+32 81 901 2345'
+                    },
+                    serviceDate: '2025-10-15',
+                    timeWindowStart: '12:30',
+                    timeWindowEnd: '14:30',
+                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
+                    notes: 'Test levering - Demo data',
+                    priority: 'normal'
+                },
+                {
+                    taskId: 'TEST-010',
+                    customerRef: 'DEMO-010',
+                    deliveryAddress: {
+                        line1: 'Rue du Pont 99, 4000 Luik',
+                        contactName: 'Marie Leblanc',
+                        contactPhone: '+32 4 012 3456'
+                    },
+                    serviceDate: '2025-10-15',
+                    timeWindowStart: '16:00',
+                    timeWindowEnd: '19:00',
+                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
+                    notes: 'Test levering - Demo data',
+                    priority: 'normal'
+                }
+            ];
+            
+            // Store test data globally
+            window.lastTextAnalysis = {
+                deliveries: testDeliveries,
+                deliveryCount: testDeliveries.length,
+                confidence: 100,
+                aiPowered: false,
+                testData: true
+            };
+            
+            // Display test data
+            const resultDiv = document.getElementById('testDataResult');
+            resultDiv.innerHTML = `
+                <div class="result">
+                    <h3>🧪 Test Data Gegenereerd</h3>
+                    <p><strong>✅ ${testDeliveries.length} test leveringen aangemaakt</strong></p>
+                    <p><strong>📅 Datum:</strong> 15 oktober 2025</p>
+                    <p><strong>🚚 Type:</strong> Fiets leveringen</p>
+                    <p><strong>📍 Locaties:</strong> Brussel, Antwerpen, Gent, Leuven, Mechelen, Brugge, Hasselt, Kortrijk, Namen, Luik</p>
+                    
+                    <div style="margin-top: 15px;">
+                        <h4>📋 Leveringen:</h4>
+                        ${testDeliveries.map((delivery, index) => `
+                            <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
+                                <strong>Levering ${index + 1}:</strong> ${delivery.customerRef}<br>
+                                <strong>Adres:</strong> ${delivery.deliveryAddress.line1}<br>
+                                <strong>Contact:</strong> ${delivery.deliveryAddress.contactName} (${delivery.deliveryAddress.contactPhone})<br>
+                                <strong>Tijd:</strong> ${delivery.timeWindowStart} - ${delivery.timeWindowEnd}
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="btn-small btn-analyze" onclick="processAllDeliveries()">🚀 Verwerk alle test leveringen</button>
+                        <button class="btn-small btn-remove" onclick="clearTestData()">🗑️ Wissen</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function clearTestData() {
+            document.getElementById('testDataResult').innerHTML = '';
+            window.lastTextAnalysis = null;
         }
         
         // Test mode management
