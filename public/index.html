@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urbantz API Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚚 Urbantz API Client</h1>
+        <p>Test je Urbantz API integratie</p>
+        
+        <form id="urbantzForm">
+            <div class="form-group">
+                <label for="apiKey">API Key:</label>
+                <input type="password" id="apiKey" placeholder="Voer je Urbantz API key in" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="customerRef">Customer Reference:</label>
+                <input type="text" id="customerRef" value="TEST-REF-123" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="deliveryAddress">Delivery Address:</label>
+                <textarea id="deliveryAddress" rows="3" required>Rue de Test 10, 1000 Bruxelles</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="serviceDate">Service Date:</label>
+                <input type="date" id="serviceDate" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="timeWindowStart">Time Window Start:</label>
+                <input type="time" id="timeWindowStart" value="09:00" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="timeWindowEnd">Time Window End:</label>
+                <input type="time" id="timeWindowEnd" value="12:00" required>
+            </div>
+            
+            <button type="submit">Test Urbantz API</button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Set today's date as default
+        document.getElementById('serviceDate').value = new Date().toISOString().split('T')[0];
+        
+        document.getElementById('urbantzForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="result">Testing API...</div>';
+            
+            try {
+                const payload = {
+                    customerRef: document.getElementById('customerRef').value,
+                    deliveryAddress: {
+                        line1: document.getElementById('deliveryAddress').value,
+                        contactName: "Test",
+                        contactPhone: "+32 470 00 00 00"
+                    },
+                    serviceDate: document.getElementById('serviceDate').value,
+                    timeWindowStart: document.getElementById('timeWindowStart').value,
+                    timeWindowEnd: document.getElementById('timeWindowEnd').value,
+                    items: [{
+                        description: "Box",
+                        quantity: 1,
+                        tempClass: "ambient"
+                    }],
+                    notes: "Test via web interface"
+                };
+                
+                const response = await fetch('/api/urbantz', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': document.getElementById('apiKey').value
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result">
+                            <h3>✅ Success!</h3>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ Error</h3>
+                            <p>${result.error || 'Unknown error occurred'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Network Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
