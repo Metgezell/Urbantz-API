@@ -148,8 +148,16 @@
         }
         
         .btn-analyze {
-            background-color: #28a745;
+            background-color: #007bff;
             color: white;
+        }
+        
+        .btn-analyze:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-analyze:active {
+            background-color: #28a745;
         }
         
         .btn-remove {
@@ -1125,6 +1133,7 @@
                 localStorage.removeItem('lastTextAnalysis');
                 localStorage.removeItem('selectedSender');
                 localStorage.removeItem('testData');
+                localStorage.removeItem('scrollPosition');
             } catch (e) {
                 console.warn('Could not clear localStorage:', e);
             }
@@ -1416,6 +1425,17 @@
         // Load saved data on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadSavedData();
+            
+            // Restore scroll position
+            const savedScrollPosition = localStorage.getItem('scrollPosition');
+            if (savedScrollPosition) {
+                window.scrollTo(0, parseInt(savedScrollPosition));
+            }
+        });
+        
+        // Save scroll position before page unload
+        window.addEventListener('beforeunload', function() {
+            localStorage.setItem('scrollPosition', window.pageYOffset);
         });
         
         // Test mode management
