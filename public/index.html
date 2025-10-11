@@ -932,26 +932,53 @@
         }
         
         function useSpecificDelivery(index) {
-            if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) return;
+            console.log('useSpecificDelivery called with index:', index);
+            
+            if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) {
+                console.error('No analysis data available');
+                alert('Geen analyse data beschikbaar');
+                return;
+            }
             
             const delivery = window.lastTextAnalysis.deliveries[index];
-            if (!delivery) return;
+            if (!delivery) {
+                console.error('Delivery not found at index:', index);
+                alert('Levering niet gevonden');
+                return;
+            }
+            
+            console.log('Using delivery:', delivery);
             
             // Fill form with specific delivery data
-            document.getElementById('customerRef').value = delivery.customerRef || '';
-            document.getElementById('deliveryAddress').value = delivery.deliveryAddress?.line1 || '';
-            document.getElementById('serviceDate').value = delivery.serviceDate || '';
-            document.getElementById('timeWindowStart').value = delivery.timeWindowStart || '';
-            document.getElementById('timeWindowEnd').value = delivery.timeWindowEnd || '';
+            const customerRefField = document.getElementById('customerRef');
+            const deliveryAddressField = document.getElementById('deliveryAddress');
+            const serviceDateField = document.getElementById('serviceDate');
+            const timeWindowStartField = document.getElementById('timeWindowStart');
+            const timeWindowEndField = document.getElementById('timeWindowEnd');
+            
+            if (customerRefField) customerRefField.value = delivery.customerRef || '';
+            if (deliveryAddressField) deliveryAddressField.value = delivery.deliveryAddress?.line1 || '';
+            if (serviceDateField) serviceDateField.value = delivery.serviceDate || '';
+            if (timeWindowStartField) timeWindowStartField.value = delivery.timeWindowStart || '';
+            if (timeWindowEndField) timeWindowEndField.value = delivery.timeWindowEnd || '';
             
             // Show success message
             const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = `
-                <div class="result">
-                    ✅ Levering ${index + 1} geladen in het formulier!
-                    <br><small>Klant: ${delivery.customerRef} | Adres: ${delivery.deliveryAddress?.line1}</small>
-                </div>
-            `;
+            if (resultDiv) {
+                resultDiv.innerHTML = `
+                    <div class="result">
+                        <h3>✅ Levering ${index + 1} geselecteerd</h3>
+                        <p><strong>Klant:</strong> ${delivery.customerRef}</p>
+                        <p><strong>Adres:</strong> ${delivery.deliveryAddress?.line1}</p>
+                        <p><strong>Datum:</strong> ${delivery.serviceDate}</p>
+                        <p><strong>Tijd:</strong> ${delivery.timeWindowStart} - ${delivery.timeWindowEnd}</p>
+                        <br><small>Data is ingevuld in het formulier hieronder</small>
+                    </div>
+                `;
+            }
+            
+            // Show success message
+            alert('✅ Data succesvol ingevuld in het formulier!');
         }
         
         function processAllDeliveries() {
