@@ -21,6 +21,13 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             post_data = self.rfile.read(content_length)
             data = json.loads(post_data.decode('utf-8'))
             
+            # Extract sender information if available
+            sender = data.get('sender', {})
+            sender_name = sender.get('name', 'Onbekend')
+            sender_email = sender.get('email', 'onbekend@example.com')
+            
+            print(f"🏢 Verzender: {sender_name} ({sender_email})")
+            
             # Validation
             if not data.get('customerRef') or not data.get('deliveryAddress', {}).get('line1'):
                 self.send_response(400)
@@ -41,8 +48,12 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 response = {
                     'success': True,
                     'taskId': f'TEST-TASK-{int(__import__("time").time() * 1000)}',
-                    'message': '✅ TEST MODE: Task created successfully (NO REAL DELIVERY)',
+                    'message': f'✅ TEST MODE: Task created successfully voor {sender_name} (NO REAL DELIVERY)',
                     'warning': '🚨 This is a TEST - no real delivery will be created!',
+                    'sender': {
+                        'name': sender_name,
+                        'email': sender_email
+                    },
                     'data': {
                         **data,
                         'status': 'test_pending',

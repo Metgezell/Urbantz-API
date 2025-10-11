@@ -244,6 +244,29 @@
             <div id="textAnalysisResult"></div>
         </div>
         
+        <!-- Customer Selection Section -->
+        <div class="section">
+            <h3>🏢 Klant Selectie</h3>
+            <div class="form-group">
+                <label for="senderSelect">Verzender/Afzender:</label>
+                <select id="senderSelect" onchange="updateSenderInfo()">
+                    <option value="">Selecteer klant...</option>
+                    <option value="BD-Bike">BD Bike</option>
+                    <option value="Test-Klant">Test Klant</option>
+                    <option value="Demo-Company">Demo Company</option>
+                    <option value="Custom">Aangepast...</option>
+                </select>
+                <div id="customSenderInput" style="display: none; margin-top: 10px;">
+                    <input type="text" id="customSenderName" placeholder="Klant naam" style="width: 200px; margin-right: 10px;">
+                    <input type="text" id="customSenderEmail" placeholder="Email adres" style="width: 200px;">
+                </div>
+            </div>
+            <div id="senderInfo" style="display: none; background: #e8f5e8; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                <strong>Geselecteerde klant:</strong> <span id="selectedSenderName"></span><br>
+                <strong>Email:</strong> <span id="selectedSenderEmail"></span>
+            </div>
+        </div>
+        
         <form id="urbantzForm">
             <div class="form-group">
                 <label for="apiKey">API Key:</label>
@@ -827,6 +850,52 @@
             window.lastTextAnalysis = null;
         }
         
+        // Customer selection functionality
+        function updateSenderInfo() {
+            const select = document.getElementById('senderSelect');
+            const customInput = document.getElementById('customSenderInput');
+            const senderInfo = document.getElementById('senderInfo');
+            const selectedName = document.getElementById('selectedSenderName');
+            const selectedEmail = document.getElementById('selectedSenderEmail');
+            
+            if (select.value === 'Custom') {
+                customInput.style.display = 'block';
+                senderInfo.style.display = 'none';
+            } else if (select.value) {
+                customInput.style.display = 'none';
+                senderInfo.style.display = 'block';
+                
+                // Set customer info based on selection
+                const customerData = getCustomerData(select.value);
+                selectedName.textContent = customerData.name;
+                selectedEmail.textContent = customerData.email;
+            } else {
+                customInput.style.display = 'none';
+                senderInfo.style.display = 'none';
+            }
+        }
+        
+        function getCustomerData(customerId) {
+            const customers = {
+                'BD-Bike': { name: 'BD Bike', email: 'info@bdbike.com' },
+                'Test-Klant': { name: 'Test Klant', email: 'test@example.com' },
+                'Demo-Company': { name: 'Demo Company', email: 'demo@company.com' }
+            };
+            return customers[customerId] || { name: 'Onbekend', email: 'onbekend@example.com' };
+        }
+        
+        function getSelectedSender() {
+            const select = document.getElementById('senderSelect');
+            if (select.value === 'Custom') {
+                const name = document.getElementById('customSenderName').value;
+                const email = document.getElementById('customSenderEmail').value;
+                return { name: name || 'Aangepaste klant', email: email || 'onbekend@example.com' };
+            } else if (select.value) {
+                return getCustomerData(select.value);
+            }
+            return null;
+        }
+        
         function useSpecificDelivery(index) {
             if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) return;
             
@@ -856,9 +925,108 @@
             const deliveries = window.lastTextAnalysis.deliveries;
             if (deliveries.length === 0) return;
             
-            if (confirm(`Wil je alle ${deliveries.length} leveringen verwerken? Dit zal ${deliveries.length} API calls maken.`)) {
-                processMultipleDeliveries(deliveries);
+            // Check if sender is selected
+            const sender = getSelectedSender();
+            if (!sender) {
+                alert('⚠️ Selecteer eerst een klant/verzender voordat je de leveringen verwerkt!');
+                return;
             }
+            
+            if (confirm(`Wil je alle ${deliveries.length} leveringen verwerken voor ${sender.name}? Dit zal ${deliveries.length} API calls maken.`)) {
+                processMultipleDeliveries(deliveries, sender);
+            }
+        }
+        
+        async function processMultipleDeliveries(deliveries, sender) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="result">🚀 Verwerken leveringen naar Urbantz...</div>';
+            
+            const results = [];
+            const isTestMode = document.getElementById('testMode').checked;
+            const apiKey = document.getElementById('apiKey').value;
+            
+            for (let i = 0; i < deliveries.length; i++) {
+                const delivery = deliveries[i];
+                
+                // Add sender information to delivery
+                const deliveryWithSender = {
+                    ...delivery,
+                    sender: {
+                        name: sender.name,
+                        email: sender.email
+                    }
+                };
+                
+                try {
+                    const response = await fetch('/api/urbantz', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-API-Key': apiKey
+                        },
+                        body: JSON.stringify(deliveryWithSender)
+                    });
+                    
+                    const result = await response.json();
+                    results.push({
+                        index: i + 1,
+                        delivery: delivery,
+                        result: result,
+                        success: response.ok
+                    });
+                    
+                    // Update progress
+                    resultDiv.innerHTML = `
+                        <div class="result">
+                            🚀 Verwerken leveringen... (${i + 1}/${deliveries.length})
+                            <br><small>Laatste: ${delivery.customerRef} - ${delivery.deliveryAddress?.line1}</small>
+                            <br><small>Verzender: ${sender.name}</small>
+                            <br><small>Status: ${result.success ? '✅ Success' : '❌ Failed'}</small>
+                        </div>
+                    `;
+                    
+                } catch (error) {
+                    results.push({
+                        index: i + 1,
+                        delivery: delivery,
+                        result: { error: error.message },
+                        success: false
+                    });
+                }
+            }
+            
+            // Show final results
+            const successCount = results.filter(r => r.success).length;
+            const failCount = results.length - successCount;
+            
+            resultDiv.innerHTML = `
+                <div class="result">
+                    <h3>📊 Verwerk Resultaten</h3>
+                    <p><strong>Verzender:</strong> ${sender.name} (${sender.email})</p>
+                    <p><strong>✅ Succesvol: ${successCount}/${deliveries.length}</strong></p>
+                    <p><strong>❌ Gefaald: ${failCount}/${deliveries.length}</strong></p>
+                    
+                    <div style="margin-top: 15px;">
+                        <h4>📋 Details:</h4>
+                        ${results.map(r => `
+                            <div style="border: 1px solid ${r.success ? '#28a745' : '#dc3545'}; padding: 10px; margin: 5px 0; border-radius: 5px;">
+                                <strong>Levering ${r.index}:</strong> ${r.delivery.customerRef}<br>
+                                <strong>Adres:</strong> ${r.delivery.deliveryAddress?.line1}<br>
+                                <strong>Status:</strong> ${r.success ? '✅ Success' : '❌ Failed'}<br>
+                                ${r.success ? `<strong>Task ID:</strong> ${r.result.taskId}` : `<strong>Error:</strong> ${r.result.error}`}
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="btn-small btn-analyze" onclick="clearResults()">🗑️ Wissen</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function clearResults() {
+            document.getElementById('result').innerHTML = '';
         }
         
         // Test mode management
