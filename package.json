@@ -1,0 +1,28 @@
+{
+  "name": "urbantz-integration",
+  "version": "1.0.0",
+  "description": "Urbantz API integration with TypeScript client and local documentation",
+  "main": "src/clients/urbantz.ts",
+  "scripts": {
+    "urbantz:dry-run": "ts-node --transpile-only scripts/urbantz-dry-run.ts",
+    "build": "tsc",
+    "dev": "ts-node --transpile-only"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2",
+    "@types/node": "^20.8.0"
+  },
+  "keywords": [
+    "urbantz",
+    "api",
+    "delivery",
+    "logistics",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT"
+}
