@@ -60,12 +60,126 @@
             border-left-color: #dc3545;
             background-color: #f8d7da;
         }
+        
+        /* Drag & Drop Styles */
+        .drop-zone {
+            border: 3px dashed #007bff;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background-color: #f8f9fa;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .drop-zone:hover {
+            background-color: #e3f2fd;
+            border-color: #0056b3;
+        }
+        
+        .drop-zone.dragover {
+            background-color: #e3f2fd;
+            border-color: #0056b3;
+            transform: scale(1.02);
+        }
+        
+        .drop-zone-icon {
+            font-size: 48px;
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+        
+        .drop-zone-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .drop-zone-subtext {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .uploaded-files {
+            margin-top: 20px;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .file-icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+        
+        .file-info {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .file-size {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .btn-analyze {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-remove {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .analysis-result {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🚚 Urbantz API Client</h1>
-        <p>Test je Urbantz API integratie</p>
+        <p>Test je Urbantz API integratie en upload documenten voor automatische verwerking</p>
+        
+        <!-- Document Upload Section -->
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">📄</div>
+            <div class="drop-zone-text">Sleep documenten hierheen</div>
+            <div class="drop-zone-subtext">Ondersteunt: PDF, Excel, Word, afbeeldingen (JPG, PNG)</div>
+            <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.xls,.docx,.doc,.jpg,.jpeg,.png" style="display: none;">
+        </div>
+        
+        <div class="uploaded-files" id="uploadedFiles"></div>
         
         <form id="urbantzForm">
             <div class="form-group">
@@ -107,6 +221,221 @@
     <script>
         // Set today's date as default
         document.getElementById('serviceDate').value = new Date().toISOString().split('T')[0];
+        
+        // File upload functionality
+        let uploadedFiles = [];
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadedFilesContainer = document.getElementById('uploadedFiles');
+        
+        // Drag and drop events
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', handleDragOver);
+        dropZone.addEventListener('dragleave', handleDragLeave);
+        dropZone.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        }
+        
+        function handleDragLeave(e) {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            processFiles(files);
+        }
+        
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            processFiles(files);
+        }
+        
+        function processFiles(files) {
+            files.forEach(file => {
+                if (isValidFileType(file)) {
+                    uploadedFiles.push({
+                        id: Date.now() + Math.random(),
+                        file: file,
+                        name: file.name,
+                        size: formatFileSize(file.size),
+                        type: getFileType(file.type),
+                        icon: getFileIcon(file.type)
+                    });
+                } else {
+                    alert(`Bestandstype niet ondersteund: ${file.name}`);
+                }
+            });
+            updateFileList();
+        }
+        
+        function isValidFileType(file) {
+            const validTypes = [
+                'application/pdf',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/msword',
+                'image/jpeg',
+                'image/jpg',
+                'image/png'
+            ];
+            return validTypes.includes(file.type);
+        }
+        
+        function getFileType(mimeType) {
+            const types = {
+                'application/pdf': 'PDF',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'Excel',
+                'application/vnd.ms-excel': 'Excel',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word',
+                'application/msword': 'Word',
+                'image/jpeg': 'Afbeelding',
+                'image/jpg': 'Afbeelding',
+                'image/png': 'Afbeelding'
+            };
+            return types[mimeType] || 'Onbekend';
+        }
+        
+        function getFileIcon(mimeType) {
+            const icons = {
+                'application/pdf': '📄',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '📊',
+                'application/vnd.ms-excel': '📊',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '📝',
+                'application/msword': '📝',
+                'image/jpeg': '🖼️',
+                'image/jpg': '🖼️',
+                'image/png': '🖼️'
+            };
+            return icons[mimeType] || '📄';
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function updateFileList() {
+            uploadedFilesContainer.innerHTML = '';
+            uploadedFiles.forEach(fileObj => {
+                const fileElement = document.createElement('div');
+                fileElement.className = 'file-item';
+                fileElement.innerHTML = `
+                    <div class="file-icon">${fileObj.icon}</div>
+                    <div class="file-info">
+                        <div class="file-name">${fileObj.name}</div>
+                        <div class="file-size">${fileObj.type} • ${fileObj.size}</div>
+                    </div>
+                    <div class="file-actions">
+                        <button class="btn-small btn-analyze" onclick="analyzeFile('${fileObj.id}')">🔍 Analyseren</button>
+                        <button class="btn-small btn-remove" onclick="removeFile('${fileObj.id}')">🗑️ Verwijderen</button>
+                    </div>
+                `;
+                uploadedFilesContainer.appendChild(fileElement);
+            });
+        }
+        
+        function removeFile(fileId) {
+            uploadedFiles = uploadedFiles.filter(f => f.id !== fileId);
+            updateFileList();
+        }
+        
+        function analyzeFile(fileId) {
+            const fileObj = uploadedFiles.find(f => f.id === fileId);
+            if (!fileObj) return;
+            
+            // Show loading state
+            const analyzeBtn = event.target;
+            const originalText = analyzeBtn.textContent;
+            analyzeBtn.textContent = '⏳ Analyseren...';
+            analyzeBtn.disabled = true;
+            
+            // Simulate AI analysis (replace with real API call later)
+            setTimeout(() => {
+                const mockAnalysis = generateMockAnalysis(fileObj);
+                showAnalysisResult(fileObj.id, mockAnalysis);
+                
+                analyzeBtn.textContent = originalText;
+                analyzeBtn.disabled = false;
+            }, 2000);
+        }
+        
+        function generateMockAnalysis(fileObj) {
+            const mockData = {
+                customerRef: `CUST-${Math.floor(Math.random() * 1000)}`,
+                deliveryAddress: {
+                    line1: "Rue de Test 123, 1000 Bruxelles",
+                    contactName: "Jan Janssen",
+                    contactPhone: "+32 470 123 456"
+                },
+                serviceDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                timeWindowStart: "09:00",
+                timeWindowEnd: "17:00",
+                items: [
+                    { description: "Pakket 1", quantity: 1, tempClass: "ambient" },
+                    { description: "Pakket 2", quantity: 2, tempClass: "chilled" }
+                ],
+                notes: `Geanalyseerd uit ${fileObj.name}`
+            };
+            
+            return {
+                confidence: Math.floor(Math.random() * 30) + 70, // 70-100%
+                extractedData: mockData,
+                rawText: `Geëxtraheerde tekst uit ${fileObj.name}:\n\nAdres: Rue de Test 123, 1000 Bruxelles\nContact: Jan Janssen (+32 470 123 456)\nLeverdatum: ${mockData.serviceDate}\nTijd: 09:00-17:00\nItems: 2 pakketten`
+            };
+        }
+        
+        function showAnalysisResult(fileId, analysis) {
+            const fileObj = uploadedFiles.find(f => f.id === fileId);
+            const fileElement = event.target.closest('.file-item');
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'analysis-result';
+            resultDiv.innerHTML = `
+                <h4>🔍 Analyse Resultaat (${analysis.confidence}% zekerheid)</h4>
+                <p><strong>Geëxtraheerde tekst:</strong></p>
+                <pre style="background: #f1f1f1; padding: 10px; border-radius: 5px; font-size: 12px;">${analysis.rawText}</pre>
+                <p><strong>Gevonden data:</strong></p>
+                <pre style="background: #e8f5e8; padding: 10px; border-radius: 5px; font-size: 12px;">${JSON.stringify(analysis.extractedData, null, 2)}</pre>
+                <button class="btn-small btn-analyze" onclick="useExtractedData('${fileId}')">✅ Gebruik deze data</button>
+            `;
+            
+            // Remove existing result if any
+            const existingResult = fileElement.querySelector('.analysis-result');
+            if (existingResult) {
+                existingResult.remove();
+            }
+            
+            fileElement.appendChild(resultDiv);
+        }
+        
+        function useExtractedData(fileId) {
+            const fileObj = uploadedFiles.find(f => f.id === fileId);
+            if (!fileObj || !fileObj.analysis) return;
+            
+            const data = fileObj.analysis.extractedData;
+            
+            // Fill form with extracted data
+            document.getElementById('customerRef').value = data.customerRef;
+            document.getElementById('deliveryAddress').value = data.deliveryAddress.line1;
+            document.getElementById('serviceDate').value = data.serviceDate;
+            document.getElementById('timeWindowStart').value = data.timeWindowStart;
+            document.getElementById('timeWindowEnd').value = data.timeWindowEnd;
+            
+            // Show success message
+            alert('✅ Data succesvol ingevuld in het formulier!');
+        }
         
         document.getElementById('urbantzForm').addEventListener('submit', async (e) => {
             e.preventDefault();
