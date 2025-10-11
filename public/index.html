@@ -445,27 +445,37 @@
         }
         
         function generateMockAnalysis(fileObj) {
-            const mockData = {
-                customerRef: `CUST-${Math.floor(Math.random() * 1000)}`,
-                deliveryAddress: {
-                    line1: "Rue de Test 123, 1000 Bruxelles",
-                    contactName: "Jan Janssen",
-                    contactPhone: "+32 470 123 456"
-                },
-                serviceDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                timeWindowStart: "09:00",
-                timeWindowEnd: "17:00",
-                items: [
-                    { description: "Pakket 1", quantity: 1, tempClass: "ambient" },
-                    { description: "Pakket 2", quantity: 2, tempClass: "chilled" }
-                ],
-                notes: `Geanalyseerd uit ${fileObj.name}`
-            };
+            // Simulate multiple deliveries from one PDF
+            const numDeliveries = Math.floor(Math.random() * 3) + 1; // 1-3 deliveries
+            const deliveries = [];
+            
+            for (let i = 0; i < numDeliveries; i++) {
+                deliveries.push({
+                    taskId: `TASK-${Math.floor(Math.random() * 1000)}-${i + 1}`,
+                    customerRef: `CUST-${Math.floor(Math.random() * 1000)}-${i + 1}`,
+                    deliveryAddress: {
+                        line1: `Rue de Test ${123 + i}, 1000 Bruxelles`,
+                        contactName: `Contact ${i + 1}`,
+                        contactPhone: `+32 470 123 45${i}`
+                    },
+                    serviceDate: new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    timeWindowStart: `${9 + i}:00`,
+                    timeWindowEnd: `${17 + i}:00`,
+                    items: [
+                        { description: `Pakket ${i + 1}`, quantity: 1, tempClass: "ambient" },
+                        { description: `Extra item ${i + 1}`, quantity: 2, tempClass: "chilled" }
+                    ],
+                    notes: `Levering ${i + 1} uit ${fileObj.name}`,
+                    priority: i === 0 ? 'high' : 'normal'
+                });
+            }
             
             return {
                 confidence: Math.floor(Math.random() * 30) + 70, // 70-100%
-                extractedData: mockData,
-                rawText: `Geëxtraheerde tekst uit ${fileObj.name}:\n\nAdres: Rue de Test 123, 1000 Bruxelles\nContact: Jan Janssen (+32 470 123 456)\nLeverdatum: ${mockData.serviceDate}\nTijd: 09:00-17:00\nItems: 2 pakketten`
+                extractedData: deliveries,
+                rawText: `Geëxtraheerde tekst uit ${fileObj.name}:\n\nGevonden ${numDeliveries} levering(en):\n${deliveries.map((d, i) => `${i + 1}. ${d.customerRef} - ${d.deliveryAddress.line1}`).join('\n')}`,
+                multipleDeliveries: true,
+                deliveryCount: numDeliveries
             };
         }
         
@@ -475,14 +485,37 @@
             
             const resultDiv = document.createElement('div');
             resultDiv.className = 'analysis-result';
-            resultDiv.innerHTML = `
-                <h4>🔍 Analyse Resultaat (${analysis.confidence}% zekerheid)</h4>
-                <p><strong>Geëxtraheerde tekst:</strong></p>
-                <pre style="background: #f1f1f1; padding: 10px; border-radius: 5px; font-size: 12px;">${analysis.rawText}</pre>
-                <p><strong>Gevonden data:</strong></p>
-                <pre style="background: #e8f5e8; padding: 10px; border-radius: 5px; font-size: 12px;">${JSON.stringify(analysis.extractedData, null, 2)}</pre>
-                <button class="btn-small btn-analyze" onclick="useExtractedData('${fileId}')">✅ Gebruik deze data</button>
-            `;
+            
+            if (analysis.multipleDeliveries) {
+                // Show multiple deliveries
+                resultDiv.innerHTML = `
+                    <h4>🔍 Analyse Resultaat (${analysis.confidence}% zekerheid)</h4>
+                    <p><strong>📦 Gevonden ${analysis.deliveryCount} levering(en) in dit document:</strong></p>
+                    <div style="margin: 10px 0;">
+                        ${analysis.extractedData.map((delivery, index) => `
+                            <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
+                                <strong>Levering ${index + 1}:</strong> ${delivery.customerRef}<br>
+                                <small>📍 ${delivery.deliveryAddress.line1}</small><br>
+                                <small>📅 ${delivery.serviceDate} ${delivery.timeWindowStart}-${delivery.timeWindowEnd}</small>
+                                <button class="btn-small btn-analyze" onclick="useSpecificDelivery('${fileId}', ${index})" style="margin-left: 10px;">✅ Gebruik deze</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <p><strong>Geëxtraheerde tekst:</strong></p>
+                    <pre style="background: #f1f1f1; padding: 10px; border-radius: 5px; font-size: 12px;">${analysis.rawText}</pre>
+                    <button class="btn-small btn-analyze" onclick="useAllDeliveries('${fileId}')">🚀 Verwerk alle leveringen</button>
+                `;
+            } else {
+                // Single delivery (old format)
+                resultDiv.innerHTML = `
+                    <h4>🔍 Analyse Resultaat (${analysis.confidence}% zekerheid)</h4>
+                    <p><strong>Geëxtraheerde tekst:</strong></p>
+                    <pre style="background: #f1f1f1; padding: 10px; border-radius: 5px; font-size: 12px;">${analysis.rawText}</pre>
+                    <p><strong>Gevonden data:</strong></p>
+                    <pre style="background: #e8f5e8; padding: 10px; border-radius: 5px; font-size: 12px;">${JSON.stringify(analysis.extractedData, null, 2)}</pre>
+                    <button class="btn-small btn-analyze" onclick="useExtractedData('${fileId}')">✅ Gebruik deze data</button>
+                `;
+            }
             
             // Remove existing result if any
             const existingResult = fileElement.querySelector('.analysis-result');
@@ -508,6 +541,97 @@
             
             // Show success message
             alert('✅ Data succesvol ingevuld in het formulier!');
+        }
+        
+        function useSpecificDelivery(fileId, deliveryIndex) {
+            const fileObj = uploadedFiles.find(f => f.id === fileId);
+            if (!fileObj || !fileObj.analysis) return;
+            
+            const delivery = fileObj.analysis.extractedData[deliveryIndex];
+            
+            // Fill form with specific delivery data
+            document.getElementById('customerRef').value = delivery.customerRef;
+            document.getElementById('deliveryAddress').value = delivery.deliveryAddress.line1;
+            document.getElementById('serviceDate').value = delivery.serviceDate;
+            document.getElementById('timeWindowStart').value = delivery.timeWindowStart;
+            document.getElementById('timeWindowEnd').value = delivery.timeWindowEnd;
+            
+            // Show success message
+            alert(`✅ Levering ${deliveryIndex + 1} succesvol ingevuld in het formulier!`);
+        }
+        
+        function useAllDeliveries(fileId) {
+            const fileObj = uploadedFiles.find(f => f.id === fileId);
+            if (!fileObj || !fileObj.analysis) return;
+            
+            const deliveries = fileObj.analysis.extractedData;
+            
+            if (confirm(`Wil je alle ${deliveries.length} leveringen verwerken? Dit zal ${deliveries.length} API calls maken.`)) {
+                processMultipleDeliveries(deliveries);
+            }
+        }
+        
+        async function processMultipleDeliveries(deliveries) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="result">🚀 Verwerken van meerdere leveringen...</div>';
+            
+            const results = [];
+            
+            for (let i = 0; i < deliveries.length; i++) {
+                const delivery = deliveries[i];
+                
+                try {
+                    const response = await fetch('/api/urbantz', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-API-Key': document.getElementById('apiKey').value
+                        },
+                        body: JSON.stringify(delivery)
+                    });
+                    
+                    const result = await response.json();
+                    results.push({
+                        delivery: i + 1,
+                        success: response.ok,
+                        result: result
+                    });
+                    
+                    // Update progress
+                    resultDiv.innerHTML = `
+                        <div class="result">
+                            🚀 Verwerken van leveringen... (${i + 1}/${deliveries.length})
+                            <br><small>Laatste: ${delivery.customerRef}</small>
+                        </div>
+                    `;
+                    
+                } catch (error) {
+                    results.push({
+                        delivery: i + 1,
+                        success: false,
+                        error: error.message
+                    });
+                }
+                
+                // Small delay between requests
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // Show final results
+            const successCount = results.filter(r => r.success).length;
+            const failureCount = results.filter(r => !r.success).length;
+            
+            resultDiv.innerHTML = `
+                <div class="result">
+                    <h4>📦 Verwerking Voltooid</h4>
+                    <p><strong>✅ Succesvol:</strong> ${successCount} leveringen</p>
+                    <p><strong>❌ Gefaald:</strong> ${failureCount} leveringen</p>
+                    <details style="margin-top: 10px;">
+                        <summary>Details per levering</summary>
+                        <pre style="background: #f1f1f1; padding: 10px; border-radius: 5px; font-size: 12px; margin-top: 10px;">${JSON.stringify(results, null, 2)}</pre>
+                    </details>
+                </div>
+            `;
         }
         
         // Text analysis functionality
