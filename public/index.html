@@ -1030,7 +1030,38 @@
                     </div>
                     
                     <div style="margin-top: 15px;">
+                        <h4>🔍 Export Code (voor controle):</h4>
+                        <div style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto;">
+                            <pre>${JSON.stringify({
+                                exportInfo: {
+                                    timestamp: new Date().toISOString(),
+                                    sender: sender,
+                                    totalDeliveries: deliveries.length,
+                                    successCount: successCount,
+                                    failCount: failCount
+                                },
+                                deliveries: deliveries.map((delivery, index) => ({
+                                    index: index + 1,
+                                    customerRef: delivery.customerRef,
+                                    address: delivery.deliveryAddress?.line1,
+                                    contactName: delivery.deliveryAddress?.contactName,
+                                    contactPhone: delivery.deliveryAddress?.contactPhone,
+                                    serviceDate: delivery.serviceDate,
+                                    timeWindow: `${delivery.timeWindowStart} - ${delivery.timeWindowEnd}`,
+                                    items: delivery.items,
+                                    notes: delivery.notes,
+                                    priority: delivery.priority,
+                                    status: results[index]?.success ? 'SUCCESS' : 'FAILED',
+                                    taskId: results[index]?.success ? results[index].result.taskId : null,
+                                    error: results[index]?.success ? null : results[index].result.error
+                                }))
+                            }, null, 2)}</pre>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
                         <button class="btn-small btn-analyze" onclick="clearResults()">🗑️ Wissen</button>
+                        <button class="btn-small btn-analyze" onclick="copyExportCode()">📋 Kopieer Export Code</button>
                     </div>
                 </div>
             `;
@@ -1038,6 +1069,20 @@
         
         function clearResults() {
             document.getElementById('result').innerHTML = '';
+        }
+        
+        function copyExportCode() {
+            const resultDiv = document.getElementById('result');
+            const preElement = resultDiv.querySelector('pre');
+            if (preElement) {
+                const exportCode = preElement.textContent;
+                navigator.clipboard.writeText(exportCode).then(() => {
+                    alert('✅ Export code gekopieerd naar clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    alert('❌ Kon export code niet kopiëren. Probeer handmatig te selecteren en kopiëren.');
+                });
+            }
         }
         
         // Test data generation
