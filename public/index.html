@@ -247,7 +247,17 @@
         <form id="urbantzForm">
             <div class="form-group">
                 <label for="apiKey">API Key:</label>
-                <input type="password" id="apiKey" placeholder="Voer je Urbantz API key in" required>
+                <input type="password" id="apiKey" placeholder="Voer je Urbantz API key in" value="test" required>
+                <small style="color: #666; font-size: 12px;">
+                    💡 Tip: Gebruik "test" voor test mode (veilig) of je echte API key voor productie
+                </small>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="testMode" checked> 
+                    🧪 Test Mode (veilig - geen echte leveringen)
+                </label>
             </div>
             
             <div class="form-group">
@@ -631,11 +641,36 @@
             window.lastTextAnalysis = null;
         }
         
+        // Test mode management
+        document.getElementById('testMode').addEventListener('change', function() {
+            const apiKeyInput = document.getElementById('apiKey');
+            const customerRefInput = document.getElementById('customerRef');
+            
+            if (this.checked) {
+                // Test mode enabled
+                apiKeyInput.value = 'test';
+                if (!customerRefInput.value.includes('TEST')) {
+                    customerRefInput.value = 'TEST-' + customerRefInput.value;
+                }
+                apiKeyInput.placeholder = 'Test mode - veilig';
+            } else {
+                // Production mode
+                apiKeyInput.value = '';
+                apiKeyInput.placeholder = 'Voer je echte Urbantz API key in';
+            }
+        });
+        
         document.getElementById('urbantzForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = '<div class="result">Testing API...</div>';
+            const isTestMode = document.getElementById('testMode').checked;
+            
+            if (isTestMode) {
+                resultDiv.innerHTML = '<div class="result">🧪 Testing in SAFE mode...</div>';
+            } else {
+                resultDiv.innerHTML = '<div class="result" style="border-left-color: #dc3545; background-color: #f8d7da;">⚠️ PRODUCTION MODE - This will create REAL deliveries!</div>';
+            }
             
             try {
                 const payload = {

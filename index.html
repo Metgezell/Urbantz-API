@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urbantz Koppeling - Task Management</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🚚 Urbantz Koppeling</h1>
+                <div class="status-indicator">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">Niet verbonden</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Configuration Section -->
+            <section class="config-section">
+                <h2>⚙️ Configuratie</h2>
+                <div class="config-form">
+                    <div class="form-group">
+                        <label for="apiKey">API Key:</label>
+                        <input type="password" id="apiKey" placeholder="Voer je Urbantz API key in">
+                        <button type="button" id="toggleApiKey" class="toggle-btn">👁️</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="baseUrl">Base URL:</label>
+                        <input type="text" id="baseUrl" value="https://api.urbantz.com" readonly>
+                    </div>
+                    <button type="button" id="testConnection" class="btn btn-secondary">Test Verbinding</button>
+                </div>
+            </section>
+
+            <!-- Task Creation Section -->
+            <section class="task-section">
+                <h2>📦 Nieuwe Taak Aanmaken</h2>
+                
+                <form id="taskForm" class="task-form">
+                    <!-- Customer Reference -->
+                    <div class="form-group">
+                        <label for="customerRef">Klant Referentie *</label>
+                        <input type="text" id="customerRef" required placeholder="Bijv. CUST-001">
+                    </div>
+
+                    <!-- Service Date -->
+                    <div class="form-group">
+                        <label for="serviceDate">Service Datum *</label>
+                        <input type="date" id="serviceDate" required>
+                    </div>
+
+                    <!-- Time Window -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="timeStart">Tijdvenster Start</label>
+                            <input type="time" id="timeStart">
+                        </div>
+                        <div class="form-group">
+                            <label for="timeEnd">Tijdvenster Eind</label>
+                            <input type="time" id="timeEnd">
+                        </div>
+                    </div>
+
+                    <!-- Pickup Address -->
+                    <div class="address-section">
+                        <h3>📍 Pickup Adres (optioneel)</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pickupLine1">Adres Regel 1</label>
+                                <input type="text" id="pickupLine1" placeholder="Straat en huisnummer">
+                            </div>
+                            <div class="form-group">
+                                <label for="pickupPostal">Postcode</label>
+                                <input type="text" id="pickupPostal" placeholder="1234AB">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pickupCity">Plaats</label>
+                                <input type="text" id="pickupCity" placeholder="Amsterdam">
+                            </div>
+                            <div class="form-group">
+                                <label for="pickupContact">Contact Naam</label>
+                                <input type="text" id="pickupContact" placeholder="Jan de Vries">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Delivery Address -->
+                    <div class="address-section">
+                        <h3>🏠 Leveradres *</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="deliveryLine1">Adres Regel 1 *</label>
+                                <input type="text" id="deliveryLine1" required placeholder="Straat en huisnummer">
+                            </div>
+                            <div class="form-group">
+                                <label for="deliveryPostal">Postcode</label>
+                                <input type="text" id="deliveryPostal" placeholder="1234AB">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="deliveryCity">Plaats</label>
+                                <input type="text" id="deliveryCity" placeholder="Amsterdam">
+                            </div>
+                            <div class="form-group">
+                                <label for="deliveryContact">Contact Naam</label>
+                                <input type="text" id="deliveryContact" placeholder="Jan de Vries">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="deliveryPhone">Telefoon</label>
+                                <input type="tel" id="deliveryPhone" placeholder="06-12345678">
+                            </div>
+                            <div class="form-group">
+                                <label for="deliveryEmail">Email</label>
+                                <input type="email" id="deliveryEmail" placeholder="jan@voorbeeld.nl">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items Section -->
+                    <div class="items-section">
+                        <h3>📦 Items</h3>
+                        <div id="itemsContainer">
+                            <div class="item-row">
+                                <input type="text" placeholder="SKU (optioneel)" class="item-sku">
+                                <input type="text" placeholder="Beschrijving" class="item-description">
+                                <input type="number" placeholder="Aantal" class="item-quantity" min="1" value="1">
+                                <input type="number" placeholder="Gewicht (kg)" class="item-weight" step="0.1">
+                                <select class="item-temp">
+                                    <option value="ambient">Kamertemperatuur</option>
+                                    <option value="chilled">Gekoeld</option>
+                                    <option value="frozen">Bevroren</option>
+                                </select>
+                                <button type="button" class="remove-item">❌</button>
+                            </div>
+                        </div>
+                        <button type="button" id="addItem" class="btn btn-outline">+ Item Toevoegen</button>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="form-group">
+                        <label for="notes">Notities</label>
+                        <textarea id="notes" rows="3" placeholder="Extra informatie over de taak..."></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">🚀 Taak Aanmaken</button>
+                        <button type="button" id="clearForm" class="btn btn-secondary">🗑️ Formulier Leegmaken</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section">
+                <h2>📊 Resultaten</h2>
+                <div id="resultsContainer">
+                    <div class="no-results">
+                        <p>Nog geen taken aangemaakt. Vul het formulier in om te beginnen.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Section -->
+            <section class="history-section">
+                <h2>📋 Geschiedenis</h2>
+                <div id="historyContainer">
+                    <div class="no-history">
+                        <p>Geen taken in de geschiedenis.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Taak wordt aangemaakt...</p>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div id="messageContainer" class="message-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

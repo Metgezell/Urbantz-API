@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urbantz API Documentatie</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            overflow-x: auto;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .nav {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="#overview">Overzicht</a>
+            <a href="#setup">Setup</a>
+            <a href="#api">API Reference</a>
+            <a href="#examples">Voorbeelden</a>
+        </div>
+
+        <h1 id="overview">Urbantz API Integratie</h1>
+        
+        <p>Welkom bij de lokale Urbantz API documentatie. Deze pagina biedt een overzicht van de Urbantz API integratie en hoe je deze kunt gebruiken.</p>
+
+        <h2>Wat is Urbantz?</h2>
+        <p>Urbantz is een platform voor last-mile delivery optimalisatie. Deze integratie maakt het mogelijk om taken (pickup/delivery) aan te maken via de Urbantz API.</p>
+
+        <h2 id="setup">Setup & Configuratie</h2>
+        
+        <h3>1. Environment Variables</h3>
+        <p>Kopieer <code>env.example</code> naar <code>.env</code> en vul je API key in:</p>
+        <div class="code-block">
+cp env.example .env
+        </div>
+
+        <div class="warning">
+            <strong>Belangrijk:</strong> Zorg ervoor dat je een geldige Urbantz API key hebt voordat je begint.
+        </div>
+
+        <h3>2. Dependencies Installeren</h3>
+        <div class="code-block">
+npm install ts-node dotenv
+        </div>
+
+        <h3>3. Test de Integratie</h3>
+        <div class="code-block">
+npm run urbantz:dry-run
+        </div>
+
+        <h2 id="api">API Reference</h2>
+        
+        <h3>Authenticatie</h3>
+        <p>De Urbantz API gebruikt API key authenticatie via de <code>x-api-key</code> header.</p>
+        
+        <h3>Kernendpoint</h3>
+        <p><strong>POST /v2/announce</strong> - Maakt een nieuwe taak aan</p>
+        
+        <h4>Verplichte velden:</h4>
+        <ul>
+            <li><code>customerRef</code> - Klant referentie</li>
+            <li><code>deliveryAddress.line1</code> - Adres regel 1</li>
+            <li><code>serviceDate</code> - Service datum (YYYY-MM-DD)</li>
+        </ul>
+
+        <h4>Optionele velden:</h4>
+        <ul>
+            <li><code>pickupAddress</code> - Pickup adres</li>
+            <li><code>timeWindowStart/End</code> - Tijdvenster (HH:MM)</li>
+            <li><code>items[]</code> - Items array</li>
+            <li><code>notes</code> - Extra notities</li>
+        </ul>
+
+        <h2 id="examples">Code Voorbeelden</h2>
+        
+        <h3>Basis Taak Aanmaken</h3>
+        <div class="code-block">
+import { announceTask } from './src/clients/urbantz';
+
+const task = await announceTask({
+  customerRef: "CUST-001",
+  deliveryAddress: {
+    line1: "Hoofdstraat 123",
+    postalCode: "1234AB",
+    city: "Amsterdam"
+  },
+  serviceDate: "2024-01-15",
+  timeWindowStart: "09:00",
+  timeWindowEnd: "17:00"
+});
+        </div>
+
+        <h3>Pickup & Delivery Taak</h3>
+        <div class="code-block">
+const pickupDeliveryTask = await announceTask({
+  customerRef: "CUST-002",
+  pickupAddress: {
+    line1: "Ophaaladres 456",
+    city: "Utrecht"
+  },
+  deliveryAddress: {
+    line1: "Leveradres 789",
+    city: "Amsterdam"
+  },
+  serviceDate: "2024-01-16",
+  items: [{
+    description: "Pakket",
+    quantity: 1,
+    weightKg: 2.5
+  }]
+});
+        </div>
+
+        <h2>Response Codes</h2>
+        <ul>
+            <li><strong>200</strong> - Taak succesvol aangemaakt</li>
+            <li><strong>400</strong> - Bad Request - ongeldige payload</li>
+            <li><strong>401</strong> - Unauthorized - ongeldige API key</li>
+            <li><strong>409</strong> - Conflict - taak bestaat al</li>
+        </ul>
+
+        <div class="success">
+            <strong>Tip:</strong> Gebruik de <code>reference.md</code> file voor een snelle API referentie, of bekijk de <code>src/clients/urbantz.ts</code> voor de volledige TypeScript implementatie.
+        </div>
+
+        <h2>OpenAPI Specificatie</h2>
+        <div class="warning">
+            <strong>Let op:</strong> De huidige <code>openapi.yaml</code> is een placeholder. Voor de complete specificatie:
+            <ol>
+                <li>Ga naar <a href="https://docs.urbantz.com/" target="_blank">https://docs.urbantz.com/</a></li>
+                <li>Zoek naar "Download OpenAPI specification"</li>
+                <li>Download de YAML/JSON file</li>
+                <li>Vervang <code>docs/urbantz/openapi.yaml</code> met de echte versie</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

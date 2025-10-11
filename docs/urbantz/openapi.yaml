@@ -1,0 +1,88 @@
+# Urbantz API OpenAPI Specification
+# 
+# ⚠️  PLACEHOLDER FILE ⚠️
+# 
+# Deze file is een placeholder. Voor de echte Urbantz OpenAPI specificatie:
+# 
+# 1. Ga naar https://docs.urbantz.com/
+# 2. Zoek naar "Download OpenAPI specification" 
+# 3. Download de YAML/JSON file
+# 4. Vervang deze file met de echte versie
+#
+# De echte OpenAPI spec bevat:
+# - Volledige endpoint definities
+# - Request/response schemas
+# - Authentication details
+# - Error codes en descriptions
+# - Examples en use cases
+
+openapi: 3.0.0
+info:
+  title: Urbantz API (Placeholder)
+  description: |
+    Dit is een placeholder OpenAPI specificatie voor de Urbantz API.
+    
+    Voor de echte specificatie, download deze van:
+    https://docs.urbantz.com/
+  version: "1.0.0"
+  contact:
+    name: Urbantz Support
+    url: https://docs.urbantz.com/
+servers:
+  - url: https://api.urbantz.com
+    description: Urbantz Production API
+paths:
+  /v2/announce:
+    post:
+      summary: Announce Task (Placeholder)
+      description: |
+        ⚠️ PLACEHOLDER ENDPOINT ⚠️
+        
+        Dit is een placeholder. Download de echte OpenAPI spec van:
+        https://docs.urbantz.com/
+      operationId: announceTask
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - customerRef
+                - deliveryAddress
+                - serviceDate
+              properties:
+                customerRef:
+                  type: string
+                  description: Customer reference
+                deliveryAddress:
+                  type: object
+                  properties:
+                    line1:
+                      type: string
+                      description: Address line 1
+                serviceDate:
+                  type: string
+                  format: date
+                  description: Service date in YYYY-MM-DD format
+      responses:
+        '200':
+          description: Task created successfully
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '409':
+          description: Conflict
+securitySchemes:
+  ApiKeyAuth:
+    type: apiKey
+    in: header
+    name: x-api-key
+    description: |
+      ⚠️ PLACEHOLDER AUTH ⚠️
+      
+      Voor echte authenticatie details, download de OpenAPI spec van:
+      https://docs.urbantz.com/
