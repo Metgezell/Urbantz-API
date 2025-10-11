@@ -741,31 +741,69 @@
         function showTextAnalysisResult(analysis) {
             const resultDiv = document.getElementById('textAnalysisResult');
             
-            const patternInfo = analysis.foundPatterns.length > 0 
-                ? `Gevonden patronen: ${analysis.foundPatterns.join(', ')}`
-                : 'Geen specifieke patronen gevonden';
+            // Handle both AI response and fallback response structures
+            const deliveries = analysis.deliveries || [];
+            const confidence = analysis.confidence || 60;
+            const deliveryCount = deliveries.length;
             
-            resultDiv.innerHTML = `
-                <div class="analysis-result">
-                    <h4>🔍 Tekst Analyse Resultaat (${analysis.confidence}% zekerheid)</h4>
-                    <div style="margin: 10px 0;">
-                        <strong>Analyse:</strong> ${analysis.analysis.wordCount} woorden, 
-                        ${analysis.analysis.hasAddress ? '✅ Adres gevonden' : '❌ Geen adres'}, 
-                        ${analysis.analysis.hasContact ? '✅ Contact gevonden' : '❌ Geen contact'}, 
-                        ${analysis.analysis.hasDate ? '✅ Datum gevonden' : '❌ Geen datum'}
+            if (deliveryCount > 0) {
+                // AI found deliveries
+                resultDiv.innerHTML = `
+                    <div class="analysis-result">
+                        <h4>🔍 AI Analyse Resultaat (${confidence}% zekerheid)</h4>
+                        <p><strong>📦 Gevonden ${deliveryCount} levering(en):</strong></p>
+                        <div style="margin: 10px 0;">
+                            ${deliveries.map((delivery, index) => `
+                                <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px;">
+                                    <strong>Levering ${index + 1}:</strong> ${delivery.customerRef || 'N/A'}<br>
+                                    <strong>Adres:</strong> ${delivery.deliveryAddress?.line1 || 'N/A'}<br>
+                                    <strong>Datum:</strong> ${delivery.serviceDate || 'N/A'}<br>
+                                    <strong>Tijd:</strong> ${delivery.timeWindowStart || 'N/A'} - ${delivery.timeWindowEnd || 'N/A'}
+                                    <div style="margin-top: 10px;">
+                                        <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})">✅ Gebruik deze levering</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${deliveryCount > 1 ? `
+                            <div style="margin-top: 15px;">
+                                <button class="btn-small btn-primary" onclick="processAllDeliveries()">🚀 Verwerk alle leveringen</button>
+                            </div>
+                        ` : ''}
+                        <div style="margin-top: 15px;">
+                            <button class="btn-small btn-remove" onclick="clearTextAnalysis()">🗑️ Wissen</button>
+                        </div>
                     </div>
-                    <p><strong>${patternInfo}</strong></p>
-                    <p><strong>Geëxtraheerde data:</strong></p>
-                    <pre style="background: #e8f5e8; padding: 10px; border-radius: 5px; font-size: 12px;">${JSON.stringify(analysis.extractedData, null, 2)}</pre>
-                    <div style="margin-top: 15px;">
-                        <button class="btn-small btn-analyze" onclick="useTextExtractedData()">✅ Gebruik deze data</button>
-                        <button class="btn-small btn-remove" onclick="clearTextAnalysis()">🗑️ Wissen</button>
+                `;
+                
+                // Store analysis for later use
+                window.lastTextAnalysis = analysis;
+            } else {
+                // Fallback pattern matching result
+                const patternInfo = analysis.foundPatterns ? analysis.foundPatterns.join(', ') : 'Geen specifieke patronen gevonden';
+                
+                resultDiv.innerHTML = `
+                    <div class="analysis-result">
+                        <h4>🔍 Tekst Analyse Resultaat (${confidence}% zekerheid)</h4>
+                        <div style="margin: 10px 0;">
+                            <strong>Analyse:</strong> ${analysis.analysis?.wordCount || 0} woorden, 
+                            ${analysis.analysis?.hasAddress ? '✅ Adres gevonden' : '❌ Geen adres'}, 
+                            ${analysis.analysis?.hasContact ? '✅ Contact gevonden' : '❌ Geen contact'}, 
+                            ${analysis.analysis?.hasDate ? '✅ Datum gevonden' : '❌ Geen datum'}
+                        </div>
+                        <p><strong>Gevonden patronen: ${patternInfo}</strong></p>
+                        <p><strong>Geëxtraheerde data:</strong></p>
+                        <pre style="background: #e8f5e8; padding: 10px; border-radius: 5px; font-size: 12px;">${JSON.stringify(analysis.extractedData || {}, null, 2)}</pre>
+                        <div style="margin-top: 15px;">
+                            <button class="btn-small btn-analyze" onclick="useTextExtractedData()">✅ Gebruik deze data</button>
+                            <button class="btn-small btn-remove" onclick="clearTextAnalysis()">🗑️ Wissen</button>
+                        </div>
                     </div>
-                </div>
-            `;
-            
-            // Store analysis for later use
-            window.lastTextAnalysis = analysis;
+                `;
+                
+                // Store analysis for later use
+                window.lastTextAnalysis = analysis;
+            }
         }
         
         function useTextExtractedData() {
@@ -787,6 +825,40 @@
         function clearTextAnalysis() {
             document.getElementById('textAnalysisResult').innerHTML = '';
             window.lastTextAnalysis = null;
+        }
+        
+        function useSpecificDelivery(index) {
+            if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) return;
+            
+            const delivery = window.lastTextAnalysis.deliveries[index];
+            if (!delivery) return;
+            
+            // Fill form with specific delivery data
+            document.getElementById('customerRef').value = delivery.customerRef || '';
+            document.getElementById('deliveryAddress').value = delivery.deliveryAddress?.line1 || '';
+            document.getElementById('serviceDate').value = delivery.serviceDate || '';
+            document.getElementById('timeWindowStart').value = delivery.timeWindowStart || '';
+            document.getElementById('timeWindowEnd').value = delivery.timeWindowEnd || '';
+            
+            // Show success message
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <div class="result">
+                    ✅ Levering ${index + 1} geladen in het formulier!
+                    <br><small>Klant: ${delivery.customerRef} | Adres: ${delivery.deliveryAddress?.line1}</small>
+                </div>
+            `;
+        }
+        
+        function processAllDeliveries() {
+            if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) return;
+            
+            const deliveries = window.lastTextAnalysis.deliveries;
+            if (deliveries.length === 0) return;
+            
+            if (confirm(`Wil je alle ${deliveries.length} leveringen verwerken? Dit zal ${deliveries.length} API calls maken.`)) {
+                processMultipleDeliveries(deliveries);
+            }
         }
         
         // Test mode management
