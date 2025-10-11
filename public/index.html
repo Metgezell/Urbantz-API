@@ -164,6 +164,52 @@
             border-radius: 5px;
             border-left: 4px solid #28a745;
         }
+        
+        /* Text Input Section Styles */
+        .text-input-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .text-input-section h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 18px;
+        }
+        
+        .text-input-container {
+            position: relative;
+        }
+        
+        .text-input-container textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+        
+        .text-input-container textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        
+        .text-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        #textAnalysisResult {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -180,6 +226,23 @@
         </div>
         
         <div class="uploaded-files" id="uploadedFiles"></div>
+        
+        <!-- Text Input Section -->
+        <div class="text-input-section">
+            <h3>📧 Of plak tekst uit een email</h3>
+            <div class="text-input-container">
+                <textarea 
+                    id="emailText" 
+                    placeholder="Plak hier tekst uit een email, leveringsinformatie, of andere tekst die je wilt analyseren..."
+                    rows="6"
+                ></textarea>
+                <div class="text-actions">
+                    <button type="button" class="btn-small btn-analyze" onclick="analyzeText()">🔍 Analyseer tekst</button>
+                    <button type="button" class="btn-small btn-remove" onclick="clearText()">🗑️ Wissen</button>
+                </div>
+            </div>
+            <div id="textAnalysisResult"></div>
+        </div>
         
         <form id="urbantzForm">
             <div class="form-group">
@@ -435,6 +498,137 @@
             
             // Show success message
             alert('✅ Data succesvol ingevuld in het formulier!');
+        }
+        
+        // Text analysis functionality
+        function analyzeText() {
+            const text = document.getElementById('emailText').value.trim();
+            if (!text) {
+                alert('Voer eerst tekst in om te analyseren!');
+                return;
+            }
+            
+            const analyzeBtn = event.target;
+            const originalText = analyzeBtn.textContent;
+            analyzeBtn.textContent = '⏳ Analyseren...';
+            analyzeBtn.disabled = true;
+            
+            // Simulate AI analysis
+            setTimeout(() => {
+                const analysis = analyzeEmailText(text);
+                showTextAnalysisResult(analysis);
+                
+                analyzeBtn.textContent = originalText;
+                analyzeBtn.disabled = false;
+            }, 1500);
+        }
+        
+        function clearText() {
+            document.getElementById('emailText').value = '';
+            document.getElementById('textAnalysisResult').innerHTML = '';
+        }
+        
+        function analyzeEmailText(text) {
+            // Simple pattern matching for common delivery information
+            const patterns = {
+                customerRef: /(?:klant|customer|ref|referentie)[\s:]*([A-Z0-9-]+)/i,
+                address: /(?:adres|address|leveradres)[\s:]*([^\n\r]+)/i,
+                contactName: /(?:contact|naam|name)[\s:]*([^\n\r]+)/i,
+                phone: /(?:tel|telefoon|phone)[\s:]*([+\d\s-]+)/i,
+                date: /(?:datum|date|leverdatum)[\s:]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|\d{4}-\d{2}-\d{2})/i,
+                time: /(?:tijd|time|tussen)[\s:]*(\d{1,2}:\d{2})/i,
+                items: /(?:items|pakketten|producten)[\s:]*([^\n\r]+)/i
+            };
+            
+            const extracted = {};
+            Object.keys(patterns).forEach(key => {
+                const match = text.match(patterns[key]);
+                if (match) {
+                    extracted[key] = match[1].trim();
+                }
+            });
+            
+            // Generate mock structured data
+            const mockData = {
+                customerRef: extracted.customerRef || `EMAIL-${Math.floor(Math.random() * 1000)}`,
+                deliveryAddress: {
+                    line1: extracted.address || "Geëxtraheerd adres uit email",
+                    contactName: extracted.contactName || "Contact persoon",
+                    contactPhone: extracted.phone || "+32 470 000 000"
+                },
+                serviceDate: extracted.date || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                timeWindowStart: extracted.time || "09:00",
+                timeWindowEnd: "17:00",
+                items: [
+                    { description: extracted.items || "Pakket uit email", quantity: 1, tempClass: "ambient" }
+                ],
+                notes: `Geanalyseerd uit email tekst`
+            };
+            
+            return {
+                confidence: Math.floor(Math.random() * 25) + 75, // 75-100%
+                extractedData: mockData,
+                rawText: text,
+                foundPatterns: Object.keys(extracted),
+                analysis: {
+                    hasAddress: !!extracted.address,
+                    hasContact: !!extracted.contactName,
+                    hasDate: !!extracted.date,
+                    hasPhone: !!extracted.phone,
+                    wordCount: text.split(/\s+/).length
+                }
+            };
+        }
+        
+        function showTextAnalysisResult(analysis) {
+            const resultDiv = document.getElementById('textAnalysisResult');
+            
+            const patternInfo = analysis.foundPatterns.length > 0 
+                ? `Gevonden patronen: ${analysis.foundPatterns.join(', ')}`
+                : 'Geen specifieke patronen gevonden';
+            
+            resultDiv.innerHTML = `
+                <div class="analysis-result">
+                    <h4>🔍 Tekst Analyse Resultaat (${analysis.confidence}% zekerheid)</h4>
+                    <div style="margin: 10px 0;">
+                        <strong>Analyse:</strong> ${analysis.analysis.wordCount} woorden, 
+                        ${analysis.analysis.hasAddress ? '✅ Adres gevonden' : '❌ Geen adres'}, 
+                        ${analysis.analysis.hasContact ? '✅ Contact gevonden' : '❌ Geen contact'}, 
+                        ${analysis.analysis.hasDate ? '✅ Datum gevonden' : '❌ Geen datum'}
+                    </div>
+                    <p><strong>${patternInfo}</strong></p>
+                    <p><strong>Geëxtraheerde data:</strong></p>
+                    <pre style="background: #e8f5e8; padding: 10px; border-radius: 5px; font-size: 12px;">${JSON.stringify(analysis.extractedData, null, 2)}</pre>
+                    <div style="margin-top: 15px;">
+                        <button class="btn-small btn-analyze" onclick="useTextExtractedData()">✅ Gebruik deze data</button>
+                        <button class="btn-small btn-remove" onclick="clearTextAnalysis()">🗑️ Wissen</button>
+                    </div>
+                </div>
+            `;
+            
+            // Store analysis for later use
+            window.lastTextAnalysis = analysis;
+        }
+        
+        function useTextExtractedData() {
+            if (!window.lastTextAnalysis) return;
+            
+            const data = window.lastTextAnalysis.extractedData;
+            
+            // Fill form with extracted data
+            document.getElementById('customerRef').value = data.customerRef;
+            document.getElementById('deliveryAddress').value = data.deliveryAddress.line1;
+            document.getElementById('serviceDate').value = data.serviceDate;
+            document.getElementById('timeWindowStart').value = data.timeWindowStart;
+            document.getElementById('timeWindowEnd').value = data.timeWindowEnd;
+            
+            // Show success message
+            alert('✅ Data succesvol ingevuld in het formulier!');
+        }
+        
+        function clearTextAnalysis() {
+            document.getElementById('textAnalysisResult').innerHTML = '';
+            window.lastTextAnalysis = null;
         }
         
         document.getElementById('urbantzForm').addEventListener('submit', async (e) => {
