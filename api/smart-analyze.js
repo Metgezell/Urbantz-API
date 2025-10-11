@@ -44,9 +44,9 @@ export default async function handler(req, res) {
 }
 
 async function extractDeliveriesWithAI(text) {
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
   
-  if (!OPENAI_API_KEY) {
+  if (!ANTHROPIC_API_KEY) {
     // Fallback to smart pattern matching
     return extractDeliveriesWithPatterns(text);
   }
@@ -72,40 +72,36 @@ ${text}
 Geef het antwoord terug als JSON array van leveringen. Als er geen leveringen gevonden worden, geef een lege array terug.
 `;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'x-api-key': ANTHROPIC_API_KEY,
         'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 4000,
         messages: [
           {
-            role: 'system',
-            content: 'Je bent een expert in het analyseren van leveringsdocumenten. Extraheer altijd gestructureerde JSON data.'
-          },
-          {
             role: 'user',
-            content: prompt
+            content: `Je bent een expert in het analyseren van leveringsdocumenten. Extraheer altijd gestructureerde JSON data.\n\n${prompt}`
           }
-        ],
-        temperature: 0.1,
-        max_tokens: 2000
+        ]
       })
     });
     
     const result = await response.json();
     
-    if (result.choices && result.choices[0]) {
-      const aiResponse = result.choices[0].message.content;
+    if (result.content && result.content[0]) {
+      const aiResponse = result.content[0].text;
       
       try {
         // Parse AI response as JSON
         const deliveries = JSON.parse(aiResponse);
         return Array.isArray(deliveries) ? deliveries : [deliveries];
       } catch (parseError) {
-        console.error('Failed to parse AI response:', parseError);
+        console.error('Failed to parse Claude response:', parseError);
         return extractDeliveriesWithPatterns(text);
       }
     }
@@ -113,7 +109,7 @@ Geef het antwoord terug als JSON array van leveringen. Als er geen leveringen ge
     return extractDeliveriesWithPatterns(text);
     
   } catch (error) {
-    console.error('OpenAI API error:', error);
+    console.error('Anthropic Claude API error:', error);
     return extractDeliveriesWithPatterns(text);
   }
 }
