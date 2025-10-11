@@ -794,7 +794,7 @@
                                     <strong>Datum:</strong> ${delivery.serviceDate || 'N/A'}<br>
                                     <strong>Tijd:</strong> ${delivery.timeWindowStart || 'N/A'} - ${delivery.timeWindowEnd || 'N/A'}
                                     <div style="margin-top: 10px;">
-                                        <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})">✅ Gebruik deze levering</button>
+                                        <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})">🔍 Gebruik deze levering</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -1164,6 +1164,7 @@
                         <p><strong>✅ ${analysis.deliveryCount} leveringen gevonden</strong></p>
                         <p><strong>🤖 AI Powered:</strong> ${analysis.aiPowered ? 'Ja' : 'Nee'}</p>
                         <p><strong>📊 Confidence:</strong> ${analysis.confidence}%</p>
+                        <p><strong>💾 Status:</strong> Data hersteld uit localStorage</p>
                         
                         <div style="margin-top: 15px;">
                             <h4>📋 Leveringen:</h4>
@@ -1174,7 +1175,7 @@
                                     <strong>Datum:</strong> ${delivery.serviceDate}<br>
                                     <strong>Tijd:</strong> ${delivery.timeWindowStart} - ${delivery.timeWindowEnd}
                                     <div style="margin-top: 10px;">
-                                        <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})">✅ Gebruik deze levering</button>
+                                        <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})">🔍 Gebruik deze levering</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -1197,6 +1198,7 @@
                     <p><strong>✅ ${testData.deliveries.length} test leveringen beschikbaar</strong></p>
                     <p><strong>📅 Datum:</strong> 15 oktober 2025</p>
                     <p><strong>🚚 Type:</strong> Fiets leveringen</p>
+                    <p><strong>💾 Status:</strong> Data hersteld uit localStorage</p>
                     
                     <div style="margin-top: 15px;">
                         <button class="btn-small btn-analyze" onclick="processAllDeliveries()">🚀 Verwerk alle test leveringen</button>
