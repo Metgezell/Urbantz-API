@@ -1411,6 +1411,28 @@
                     <p><strong>💾 Status:</strong> Data hersteld uit localStorage</p>
                     
                     <div style="margin-top: 15px;">
+                        <h4>📋 Leveringen:</h4>
+                        ${testData.deliveries.map((delivery, index) => `
+                            <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <div style="flex: 1;">
+                                        <strong>Levering ${index + 1}:</strong> ${delivery.customerRef}<br>
+                                        <strong>Adres:</strong> ${delivery.deliveryAddress.line1}<br>
+                                        <strong>Contact:</strong> ${delivery.deliveryAddress.contactName} (${delivery.deliveryAddress.contactPhone})<br>
+                                        <strong>Tijd:</strong> ${delivery.timeWindowStart} - ${delivery.timeWindowEnd}
+                                    </div>
+                                    <div style="margin-left: 10px;">
+                                        <button class="btn-small btn-edit" onclick="editDelivery(${index})" title="Bewerk deze levering">✏️</button>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 10px; text-align: center;">
+                                    <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})" style="background-color: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">🔍 Gebruik deze levering</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
                         <button class="btn-small btn-analyze" onclick="processAllDeliveries()">🚀 Verwerk alle test leveringen</button>
                         <button class="btn-small btn-remove" onclick="clearTestData()">🗑️ Wissen</button>
                     </div>
@@ -1600,10 +1622,20 @@
                         <h4>📋 Leveringen:</h4>
                         ${testDeliveries.map((delivery, index) => `
                             <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
-                                <strong>Levering ${index + 1}:</strong> ${delivery.customerRef}<br>
-                                <strong>Adres:</strong> ${delivery.deliveryAddress.line1}<br>
-                                <strong>Contact:</strong> ${delivery.deliveryAddress.contactName} (${delivery.deliveryAddress.contactPhone})<br>
-                                <strong>Tijd:</strong> ${delivery.timeWindowStart} - ${delivery.timeWindowEnd}
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <div style="flex: 1;">
+                                        <strong>Levering ${index + 1}:</strong> ${delivery.customerRef}<br>
+                                        <strong>Adres:</strong> ${delivery.deliveryAddress.line1}<br>
+                                        <strong>Contact:</strong> ${delivery.deliveryAddress.contactName} (${delivery.deliveryAddress.contactPhone})<br>
+                                        <strong>Tijd:</strong> ${delivery.timeWindowStart} - ${delivery.timeWindowEnd}
+                                    </div>
+                                    <div style="margin-left: 10px;">
+                                        <button class="btn-small btn-edit" onclick="editDelivery(${index})" title="Bewerk deze levering">✏️</button>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 10px; text-align: center;">
+                                    <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})" style="background-color: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">🔍 Gebruik deze levering</button>
+                                </div>
                             </div>
                         `).join('')}
                     </div>
