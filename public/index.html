@@ -666,8 +666,34 @@
             document.getElementById('timeWindowStart').value = delivery.timeWindowStart;
             document.getElementById('timeWindowEnd').value = delivery.timeWindowEnd;
             
+            // Update button to show it's in use
+            updateFileDeliveryButton(fileId, deliveryIndex, true);
+            
             // Show success message
             showNotification(`✅ Levering ${deliveryIndex + 1} succesvol ingevuld in het formulier!`, 'success');
+        }
+        
+        function updateFileDeliveryButton(fileId, deliveryIndex, isUsed) {
+            // Find the specific button for this file and delivery
+            const buttons = document.querySelectorAll(`[onclick="useSpecificDelivery('${fileId}', ${deliveryIndex})"]`);
+            
+            buttons.forEach(button => {
+                if (isUsed) {
+                    // Mark as used
+                    button.innerHTML = '✅ In gebruik';
+                    button.style.backgroundColor = '#28a745';
+                    button.style.color = 'white';
+                    button.disabled = true;
+                    button.onclick = null; // Remove click handler
+                } else {
+                    // Reset to normal
+                    button.innerHTML = '🔍 Gebruik deze levering';
+                    button.style.backgroundColor = '#007bff';
+                    button.style.color = 'white';
+                    button.disabled = false;
+                    button.onclick = () => useSpecificDelivery(fileId, deliveryIndex); // Restore click handler
+                }
+            });
         }
         
         function useAllDeliveries(fileId) {
@@ -794,6 +820,20 @@
         function clearText() {
             document.getElementById('emailText').value = '';
             document.getElementById('textAnalysisResult').innerHTML = '';
+            
+            // Reset all delivery buttons
+            resetAllDeliveryButtons();
+        }
+        
+        function resetAllDeliveryButtons() {
+            // Reset all "Gebruik deze levering" buttons to normal state
+            const allButtons = document.querySelectorAll('[onclick*="useSpecificDelivery"]');
+            allButtons.forEach(button => {
+                button.innerHTML = '🔍 Gebruik deze levering';
+                button.style.backgroundColor = '#007bff';
+                button.style.color = 'white';
+                button.disabled = false;
+            });
         }
         
         function analyzeEmailText(text) {
@@ -983,6 +1023,9 @@
             document.getElementById('textAnalysisResult').innerHTML = '';
             window.lastTextAnalysis = null;
             localStorage.removeItem('lastTextAnalysis');
+            
+            // Reset all delivery buttons
+            resetAllDeliveryButtons();
         }
         
         // Customer selection functionality
@@ -1071,6 +1114,9 @@
             if (timeWindowStartField) timeWindowStartField.value = delivery.timeWindowStart || '';
             if (timeWindowEndField) timeWindowEndField.value = delivery.timeWindowEnd || '';
             
+            // Update button to show it's in use
+            updateDeliveryButton(index, true);
+            
             // Show success message
             const resultDiv = document.getElementById('result');
             if (resultDiv) {
@@ -1088,6 +1134,29 @@
             
             // Show success message
             showNotification('✅ Data succesvol ingevuld in het formulier!', 'success');
+        }
+        
+        function updateDeliveryButton(index, isUsed) {
+            // Find all buttons for this delivery index
+            const buttons = document.querySelectorAll(`[onclick="useSpecificDelivery(${index})"]`);
+            
+            buttons.forEach(button => {
+                if (isUsed) {
+                    // Mark as used
+                    button.innerHTML = '✅ In gebruik';
+                    button.style.backgroundColor = '#28a745';
+                    button.style.color = 'white';
+                    button.disabled = true;
+                    button.onclick = null; // Remove click handler
+                } else {
+                    // Reset to normal
+                    button.innerHTML = '🔍 Gebruik deze levering';
+                    button.style.backgroundColor = '#007bff';
+                    button.style.color = 'white';
+                    button.disabled = false;
+                    button.onclick = () => useSpecificDelivery(index); // Restore click handler
+                }
+            });
         }
         
         function editDelivery(index) {
@@ -1794,6 +1863,9 @@
             window.lastTextAnalysis = null;
             localStorage.removeItem('testData');
             localStorage.removeItem('lastTextAnalysis');
+            
+            // Reset all delivery buttons
+            resetAllDeliveryButtons();
         }
         
         // Notification system
