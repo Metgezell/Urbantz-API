@@ -160,6 +160,20 @@
             background-color: #28a745;
         }
         
+        .btn-edit {
+            background-color: #ffc107;
+            color: #000;
+            border: none;
+            padding: 5px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-edit:hover {
+            background-color: #e0a800;
+        }
+        
         .btn-remove {
             background-color: #dc3545;
             color: white;
@@ -797,10 +811,17 @@
                         <div style="margin: 10px 0;">
                             ${deliveries.map((delivery, index) => `
                                 <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px;">
-                                    <strong>Levering ${index + 1}:</strong> ${delivery.customerRef || 'N/A'}<br>
-                                    <strong>Adres:</strong> ${delivery.deliveryAddress?.line1 || 'N/A'}<br>
-                                    <strong>Datum:</strong> ${delivery.serviceDate || 'N/A'}<br>
-                                    <strong>Tijd:</strong> ${delivery.timeWindowStart || 'N/A'} - ${delivery.timeWindowEnd || 'N/A'}
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                        <div style="flex: 1;">
+                                            <strong>Levering ${index + 1}:</strong> ${delivery.customerRef || 'N/A'}<br>
+                                            <strong>Adres:</strong> ${delivery.deliveryAddress?.line1 || 'N/A'}<br>
+                                            <strong>Datum:</strong> ${delivery.serviceDate || 'N/A'}<br>
+                                            <strong>Tijd:</strong> ${delivery.timeWindowStart || 'N/A'} - ${delivery.timeWindowEnd || 'N/A'}
+                                        </div>
+                                        <div style="margin-left: 10px;">
+                                            <button class="btn-small btn-edit" onclick="editDelivery(${index})" title="Bewerk deze levering">✏️</button>
+                                        </div>
+                                    </div>
                                     <div style="margin-top: 10px;">
                                         <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})">🔍 Gebruik deze levering</button>
                                     </div>
@@ -979,6 +1000,125 @@
             
             // Show success message
             alert('✅ Data succesvol ingevuld in het formulier!');
+        }
+        
+        function editDelivery(index) {
+            console.log('editDelivery called with index:', index);
+            
+            if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) {
+                console.error('No analysis data available');
+                alert('Geen analyse data beschikbaar');
+                return;
+            }
+            
+            const delivery = window.lastTextAnalysis.deliveries[index];
+            if (!delivery) {
+                console.error('Delivery not found at index:', index);
+                alert('Levering niet gevonden');
+                return;
+            }
+            
+            console.log('Editing delivery:', delivery);
+            
+            // Create edit form
+            const editForm = `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                    <h4>✏️ Bewerk Levering ${index + 1}</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0;">
+                        <div>
+                            <label><strong>Klant Referentie:</strong></label>
+                            <input type="text" id="edit-customerRef-${index}" value="${delivery.customerRef || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                        </div>
+                        <div>
+                            <label><strong>Datum:</strong></label>
+                            <input type="date" id="edit-serviceDate-${index}" value="${delivery.serviceDate || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                        </div>
+                        <div>
+                            <label><strong>Adres:</strong></label>
+                            <input type="text" id="edit-deliveryAddress-${index}" value="${delivery.deliveryAddress?.line1 || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                        </div>
+                        <div>
+                            <label><strong>Contact Naam:</strong></label>
+                            <input type="text" id="edit-contactName-${index}" value="${delivery.deliveryAddress?.contactName || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                        </div>
+                        <div>
+                            <label><strong>Start Tijd:</strong></label>
+                            <input type="time" id="edit-timeWindowStart-${index}" value="${delivery.timeWindowStart || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                        </div>
+                        <div>
+                            <label><strong>Eind Tijd:</strong></label>
+                            <input type="time" id="edit-timeWindowEnd-${index}" value="${delivery.timeWindowEnd || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                        </div>
+                        <div>
+                            <label><strong>Telefoon:</strong></label>
+                            <input type="text" id="edit-contactPhone-${index}" value="${delivery.deliveryAddress?.contactPhone || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                        </div>
+                        <div>
+                            <label><strong>Items:</strong></label>
+                            <input type="text" id="edit-items-${index}" value="${delivery.items ? delivery.items.join(', ') : ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;" placeholder="Fiets, Accessoires, etc.">
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <button class="btn-small btn-primary" onclick="saveDeliveryEdit(${index})">💾 Opslaan</button>
+                        <button class="btn-small btn-remove" onclick="cancelDeliveryEdit(${index})">❌ Annuleren</button>
+                    </div>
+                </div>
+            `;
+            
+            // Show edit form in result area
+            const resultDiv = document.getElementById('textAnalysisResult');
+            if (resultDiv) {
+                resultDiv.innerHTML = editForm;
+            }
+        }
+        
+        function saveDeliveryEdit(index) {
+            console.log('saveDeliveryEdit called with index:', index);
+            
+            if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) {
+                alert('Geen analyse data beschikbaar');
+                return;
+            }
+            
+            const delivery = window.lastTextAnalysis.deliveries[index];
+            if (!delivery) {
+                alert('Levering niet gevonden');
+                return;
+            }
+            
+            // Get edited values
+            const editedDelivery = {
+                ...delivery,
+                customerRef: document.getElementById(`edit-customerRef-${index}`).value,
+                serviceDate: document.getElementById(`edit-serviceDate-${index}`).value,
+                timeWindowStart: document.getElementById(`edit-timeWindowStart-${index}`).value,
+                timeWindowEnd: document.getElementById(`edit-timeWindowEnd-${index}`).value,
+                deliveryAddress: {
+                    ...delivery.deliveryAddress,
+                    line1: document.getElementById(`edit-deliveryAddress-${index}`).value,
+                    contactName: document.getElementById(`edit-contactName-${index}`).value,
+                    contactPhone: document.getElementById(`edit-contactPhone-${index}`).value
+                },
+                items: document.getElementById(`edit-items-${index}`).value.split(',').map(item => item.trim()).filter(item => item)
+            };
+            
+            // Update the delivery in the analysis
+            window.lastTextAnalysis.deliveries[index] = editedDelivery;
+            
+            // Save to localStorage
+            saveToLocalStorage('lastTextAnalysis', window.lastTextAnalysis);
+            
+            // Refresh the display
+            showTextAnalysisResult(window.lastTextAnalysis);
+            
+            alert('✅ Levering succesvol bijgewerkt!');
+        }
+        
+        function cancelDeliveryEdit(index) {
+            // Just refresh the display without saving
+            if (window.lastTextAnalysis) {
+                showTextAnalysisResult(window.lastTextAnalysis);
+            }
         }
         
         function processAllDeliveries() {
