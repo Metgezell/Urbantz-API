@@ -797,10 +797,26 @@
         function showTextAnalysisResult(analysis) {
             const resultDiv = document.getElementById('textAnalysisResult');
             
+            console.log('showTextAnalysisResult called with:', analysis);
+            
             // Handle both AI response and fallback response structures
-            const deliveries = analysis.deliveries || [];
-            const confidence = analysis.confidence || 60;
+            let deliveries = [];
+            let confidence = 60;
+            
+            if (analysis.deliveries && Array.isArray(analysis.deliveries)) {
+                deliveries = analysis.deliveries;
+                confidence = analysis.confidence || 85;
+            } else if (analysis.analysis && analysis.analysis.deliveries && Array.isArray(analysis.analysis.deliveries)) {
+                deliveries = analysis.analysis.deliveries;
+                confidence = analysis.confidence || 85;
+            } else if (Array.isArray(analysis)) {
+                // Direct array of deliveries
+                deliveries = analysis;
+                confidence = 90;
+            }
+            
             const deliveryCount = deliveries.length;
+            console.log('Processed deliveries:', deliveries, 'Count:', deliveryCount);
             
             if (deliveryCount > 0) {
                 // AI found deliveries
@@ -808,13 +824,30 @@
                     <div class="analysis-result">
                         <h4>🔍 AI Analyse Resultaat (${confidence}% zekerheid)</h4>
                         <p><strong>📦 Gevonden ${deliveryCount} levering(en):</strong></p>
+                        <div style="background: #e8f4fd; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 12px;">
+                            <strong>Debug Info:</strong> ${deliveryCount} deliveries gevonden<br>
+                            <strong>Data structuur:</strong> ${JSON.stringify(deliveries.slice(0, 1), null, 2)}
+                        </div>
                         <div style="margin: 10px 0;">
-                            ${deliveries.map((delivery, index) => `
-                                <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px;">
+                            ${deliveries.map((delivery, index) => {
+                                console.log(`Rendering delivery ${index}:`, delivery);
+                                
+                                // Handle different address formats
+                                let address = 'N/A';
+                                if (delivery.deliveryAddress) {
+                                    if (typeof delivery.deliveryAddress === 'string') {
+                                        address = delivery.deliveryAddress;
+                                    } else if (delivery.deliveryAddress.line1) {
+                                        address = delivery.deliveryAddress.line1;
+                                    }
+                                }
+                                
+                                return `
+                                <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
                                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                         <div style="flex: 1;">
                                             <strong>Levering ${index + 1}:</strong> ${delivery.customerRef || 'N/A'}<br>
-                                            <strong>Adres:</strong> ${delivery.deliveryAddress?.line1 || 'N/A'}<br>
+                                            <strong>Adres:</strong> ${address}<br>
                                             <strong>Datum:</strong> ${delivery.serviceDate || 'N/A'}<br>
                                             <strong>Tijd:</strong> ${delivery.timeWindowStart || 'N/A'} - ${delivery.timeWindowEnd || 'N/A'}
                                         </div>
@@ -822,11 +855,12 @@
                                             <button class="btn-small btn-edit" onclick="editDelivery(${index})" title="Bewerk deze levering">✏️</button>
                                         </div>
                                     </div>
-                                    <div style="margin-top: 10px;">
-                                        <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})">🔍 Gebruik deze levering</button>
+                                    <div style="margin-top: 10px; text-align: center;">
+                                        <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})" style="background-color: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">🔍 Gebruik deze levering</button>
                                     </div>
                                 </div>
-                            `).join('')}
+                            `;
+                            }).join('')}
                         </div>
                         ${deliveryCount > 1 ? `
                             <div style="margin-top: 15px;">
