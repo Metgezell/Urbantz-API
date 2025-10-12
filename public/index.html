@@ -1039,13 +1039,24 @@
         function editDelivery(index) {
             console.log('editDelivery called with index:', index);
             
-            if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) {
-                console.error('No analysis data available');
-                alert('Geen analyse data beschikbaar');
+            // Check for test data first
+            const testData = JSON.parse(localStorage.getItem('testData') || 'null');
+            let delivery = null;
+            let isTestData = false;
+            
+            if (testData && testData.deliveries && testData.deliveries[index]) {
+                delivery = testData.deliveries[index];
+                isTestData = true;
+                console.log('Using test data delivery:', delivery);
+            } else if (window.lastTextAnalysis && window.lastTextAnalysis.deliveries && window.lastTextAnalysis.deliveries[index]) {
+                delivery = window.lastTextAnalysis.deliveries[index];
+                console.log('Using analysis data delivery:', delivery);
+            } else {
+                console.error('No delivery data available at index:', index);
+                alert('Geen levering data beschikbaar');
                 return;
             }
             
-            const delivery = window.lastTextAnalysis.deliveries[index];
             if (!delivery) {
                 console.error('Delivery not found at index:', index);
                 alert('Levering niet gevonden');
@@ -1109,26 +1120,25 @@
         function saveDeliveryEdit(index) {
             console.log('saveDeliveryEdit called with index:', index);
             
-            if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) {
-                alert('Geen analyse data beschikbaar');
-                return;
-            }
+            // Check for test data first
+            const testData = JSON.parse(localStorage.getItem('testData') || 'null');
+            let isTestData = false;
             
-            const delivery = window.lastTextAnalysis.deliveries[index];
-            if (!delivery) {
-                alert('Levering niet gevonden');
+            if (testData && testData.deliveries && testData.deliveries[index]) {
+                isTestData = true;
+                console.log('Updating test data delivery');
+            } else if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) {
+                alert('Geen analyse data beschikbaar');
                 return;
             }
             
             // Get edited values
             const editedDelivery = {
-                ...delivery,
                 customerRef: document.getElementById(`edit-customerRef-${index}`).value,
                 serviceDate: document.getElementById(`edit-serviceDate-${index}`).value,
                 timeWindowStart: document.getElementById(`edit-timeWindowStart-${index}`).value,
                 timeWindowEnd: document.getElementById(`edit-timeWindowEnd-${index}`).value,
                 deliveryAddress: {
-                    ...delivery.deliveryAddress,
                     line1: document.getElementById(`edit-deliveryAddress-${index}`).value,
                     contactName: document.getElementById(`edit-contactName-${index}`).value,
                     contactPhone: document.getElementById(`edit-contactPhone-${index}`).value
@@ -1136,21 +1146,42 @@
                 items: document.getElementById(`edit-items-${index}`).value.split(',').map(item => item.trim()).filter(item => item)
             };
             
-            // Update the delivery in the analysis
-            window.lastTextAnalysis.deliveries[index] = editedDelivery;
-            
-            // Save to localStorage
-            saveToLocalStorage('lastTextAnalysis', window.lastTextAnalysis);
-            
-            // Refresh the display
-            showTextAnalysisResult(window.lastTextAnalysis);
+            if (isTestData) {
+                // Update test data
+                testData.deliveries[index] = { ...testData.deliveries[index], ...editedDelivery };
+                localStorage.setItem('testData', JSON.stringify(testData));
+                
+                // Update global analysis data too
+                window.lastTextAnalysis = {
+                    deliveries: testData.deliveries,
+                    deliveryCount: testData.deliveries.length,
+                    confidence: 100,
+                    aiPowered: false,
+                    testData: true
+                };
+                
+                // Refresh test data display
+                displaySavedTestData(testData);
+            } else {
+                // Update analysis data
+                window.lastTextAnalysis.deliveries[index] = { ...window.lastTextAnalysis.deliveries[index], ...editedDelivery };
+                saveToLocalStorage('lastTextAnalysis', window.lastTextAnalysis);
+                
+                // Refresh the display
+                showTextAnalysisResult(window.lastTextAnalysis);
+            }
             
             alert('✅ Levering succesvol bijgewerkt!');
         }
         
         function cancelDeliveryEdit(index) {
             // Just refresh the display without saving
-            if (window.lastTextAnalysis) {
+            const testData = JSON.parse(localStorage.getItem('testData') || 'null');
+            
+            if (testData && testData.deliveries) {
+                // Refresh test data display
+                displaySavedTestData(testData);
+            } else if (window.lastTextAnalysis) {
                 showTextAnalysisResult(window.lastTextAnalysis);
             }
         }
