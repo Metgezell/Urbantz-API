@@ -843,7 +843,7 @@
                                 }
                                 
                                 return `
-                                <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
+                                <div data-delivery-index="${index}" style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
                                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                         <div style="flex: 1;">
                                             <strong>Levering ${index + 1}:</strong> ${delivery.customerRef || 'N/A'}<br>
@@ -1039,81 +1039,137 @@
         function editDelivery(index) {
             console.log('editDelivery called with index:', index);
             
-            // Check for test data first
+            // Find the delivery card element
+            const deliveryCards = document.querySelectorAll('[data-delivery-index]');
+            const targetCard = Array.from(deliveryCards).find(card => 
+                parseInt(card.getAttribute('data-delivery-index')) === index
+            );
+            
+            if (!targetCard) {
+                console.error('Delivery card not found for index:', index);
+                alert('Levering kaart niet gevonden');
+                return;
+            }
+            
+            // Toggle edit mode
+            const isEditing = targetCard.classList.contains('editing');
+            
+            if (isEditing) {
+                // Save changes
+                saveInlineEdit(index, targetCard);
+            } else {
+                // Enter edit mode
+                enterInlineEdit(index, targetCard);
+            }
+        }
+        
+        function enterInlineEdit(index, card) {
+            // Get current delivery data
             const testData = JSON.parse(localStorage.getItem('testData') || 'null');
             let delivery = null;
-            let isTestData = false;
             
             if (testData && testData.deliveries && testData.deliveries[index]) {
                 delivery = testData.deliveries[index];
-                isTestData = true;
-                console.log('Using test data delivery:', delivery);
             } else if (window.lastTextAnalysis && window.lastTextAnalysis.deliveries && window.lastTextAnalysis.deliveries[index]) {
                 delivery = window.lastTextAnalysis.deliveries[index];
-                console.log('Using analysis data delivery:', delivery);
-            } else {
-                console.error('No delivery data available at index:', index);
-                alert('Geen levering data beschikbaar');
-                return;
             }
             
             if (!delivery) {
-                console.error('Delivery not found at index:', index);
-                alert('Levering niet gevonden');
+                alert('Levering data niet gevonden');
                 return;
             }
             
-            console.log('Editing delivery:', delivery);
+            // Add editing class
+            card.classList.add('editing');
             
-            // Create edit form
-            const editForm = `
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0;">
-                    <h4>✏️ Bewerk Levering ${index + 1}</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0;">
-                        <div>
-                            <label><strong>Klant Referentie:</strong></label>
-                            <input type="text" id="edit-customerRef-${index}" value="${delivery.customerRef || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+            // Replace content with inline edit form
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="flex: 1;">
+                        <div style="margin-bottom: 8px;">
+                            <strong>Levering ${index + 1}:</strong> 
+                            <input type="text" id="inline-customerRef-${index}" value="${delivery.customerRef || ''}" style="width: 200px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; margin-left: 5px;">
                         </div>
-                        <div>
-                            <label><strong>Datum:</strong></label>
-                            <input type="date" id="edit-serviceDate-${index}" value="${delivery.serviceDate || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                        <div style="margin-bottom: 8px;">
+                            <strong>Adres:</strong> 
+                            <input type="text" id="inline-deliveryAddress-${index}" value="${delivery.deliveryAddress?.line1 || ''}" style="width: 300px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; margin-left: 5px;">
                         </div>
-                        <div>
-                            <label><strong>Adres:</strong></label>
-                            <input type="text" id="edit-deliveryAddress-${index}" value="${delivery.deliveryAddress?.line1 || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                        <div style="margin-bottom: 8px;">
+                            <strong>Contact:</strong> 
+                            <input type="text" id="inline-contactName-${index}" value="${delivery.deliveryAddress?.contactName || ''}" style="width: 150px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; margin-left: 5px;">
+                            <input type="text" id="inline-contactPhone-${index}" value="${delivery.deliveryAddress?.contactPhone || ''}" style="width: 150px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; margin-left: 5px;">
                         </div>
-                        <div>
-                            <label><strong>Contact Naam:</strong></label>
-                            <input type="text" id="edit-contactName-${index}" value="${delivery.deliveryAddress?.contactName || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
-                        </div>
-                        <div>
-                            <label><strong>Start Tijd:</strong></label>
-                            <input type="time" id="edit-timeWindowStart-${index}" value="${delivery.timeWindowStart || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
-                        </div>
-                        <div>
-                            <label><strong>Eind Tijd:</strong></label>
-                            <input type="time" id="edit-timeWindowEnd-${index}" value="${delivery.timeWindowEnd || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
-                        </div>
-                        <div>
-                            <label><strong>Telefoon:</strong></label>
-                            <input type="text" id="edit-contactPhone-${index}" value="${delivery.deliveryAddress?.contactPhone || ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
-                        </div>
-                        <div>
-                            <label><strong>Items:</strong></label>
-                            <input type="text" id="edit-items-${index}" value="${delivery.items ? delivery.items.join(', ') : ''}" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;" placeholder="Fiets, Accessoires, etc.">
+                        <div style="margin-bottom: 8px;">
+                            <strong>Tijd:</strong> 
+                            <input type="time" id="inline-timeWindowStart-${index}" value="${delivery.timeWindowStart || ''}" style="width: 100px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; margin-left: 5px;">
+                            <input type="time" id="inline-timeWindowEnd-${index}" value="${delivery.timeWindowEnd || ''}" style="width: 100px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; margin-left: 5px;">
                         </div>
                     </div>
-                    <div style="margin-top: 15px;">
-                        <button class="btn-small btn-primary" onclick="saveDeliveryEdit(${index})">💾 Opslaan</button>
-                        <button class="btn-small btn-remove" onclick="cancelDeliveryEdit(${index})">❌ Annuleren</button>
+                    <div style="margin-left: 10px;">
+                        <button class="btn-small btn-primary" onclick="editDelivery(${index})" style="background-color: #28a745; color: white; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; margin-right: 5px;">💾</button>
+                        <button class="btn-small btn-remove" onclick="cancelInlineEdit(${index})" style="background-color: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer;">❌</button>
                     </div>
                 </div>
+                <div style="margin-top: 10px; text-align: center;">
+                    <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})" style="background-color: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">🔍 Gebruik deze levering</button>
+                </div>
             `;
+        }
+        
+        function saveInlineEdit(index, card) {
+            // Get edited values
+            const editedDelivery = {
+                customerRef: document.getElementById(`inline-customerRef-${index}`).value,
+                serviceDate: document.getElementById(`inline-serviceDate-${index}`)?.value || card.querySelector('[data-field="serviceDate"]')?.textContent || '',
+                timeWindowStart: document.getElementById(`inline-timeWindowStart-${index}`).value,
+                timeWindowEnd: document.getElementById(`inline-timeWindowEnd-${index}`).value,
+                deliveryAddress: {
+                    line1: document.getElementById(`inline-deliveryAddress-${index}`).value,
+                    contactName: document.getElementById(`inline-contactName-${index}`).value,
+                    contactPhone: document.getElementById(`inline-contactPhone-${index}`).value
+                }
+            };
             
-            // Show edit form in result area
-            const resultDiv = document.getElementById('textAnalysisResult');
-            if (resultDiv) {
-                resultDiv.innerHTML = editForm;
+            // Update data
+            const testData = JSON.parse(localStorage.getItem('testData') || 'null');
+            
+            if (testData && testData.deliveries && testData.deliveries[index]) {
+                // Update test data
+                testData.deliveries[index] = { ...testData.deliveries[index], ...editedDelivery };
+                localStorage.setItem('testData', JSON.stringify(testData));
+                
+                // Update global analysis data too
+                window.lastTextAnalysis = {
+                    deliveries: testData.deliveries,
+                    deliveryCount: testData.deliveries.length,
+                    confidence: 100,
+                    aiPowered: false,
+                    testData: true
+                };
+                
+                // Refresh test data display
+                displaySavedTestData(testData);
+            } else if (window.lastTextAnalysis && window.lastTextAnalysis.deliveries) {
+                // Update analysis data
+                window.lastTextAnalysis.deliveries[index] = { ...window.lastTextAnalysis.deliveries[index], ...editedDelivery };
+                saveToLocalStorage('lastTextAnalysis', window.lastTextAnalysis);
+                
+                // Refresh the display
+                showTextAnalysisResult(window.lastTextAnalysis);
+            }
+            
+            alert('✅ Levering succesvol bijgewerkt!');
+        }
+        
+        function cancelInlineEdit(index) {
+            // Just refresh the display without saving
+            const testData = JSON.parse(localStorage.getItem('testData') || 'null');
+            
+            if (testData && testData.deliveries) {
+                // Refresh test data display
+                displaySavedTestData(testData);
+            } else if (window.lastTextAnalysis) {
+                showTextAnalysisResult(window.lastTextAnalysis);
             }
         }
         
@@ -1444,7 +1500,7 @@
                     <div style="margin-top: 15px;">
                         <h4>📋 Leveringen:</h4>
                         ${testData.deliveries.map((delivery, index) => `
-                            <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
+                            <div data-delivery-index="${index}" style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                     <div style="flex: 1;">
                                         <strong>Levering ${index + 1}:</strong> ${delivery.customerRef}<br>
@@ -1652,7 +1708,7 @@
                     <div style="margin-top: 15px;">
                         <h4>📋 Leveringen:</h4>
                         ${testDeliveries.map((delivery, index) => `
-                            <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
+                            <div data-delivery-index="${index}" style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                     <div style="flex: 1;">
                                         <strong>Levering ${index + 1}:</strong> ${delivery.customerRef}<br>
