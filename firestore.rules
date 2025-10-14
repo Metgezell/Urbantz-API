@@ -1,0 +1,22 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Deliveries collection - allow read/write for authenticated users
+    match /deliveries/{deliveryId} {
+      allow read, write: if true; // TODO: Add proper authentication
+    }
+    
+    // Training samples collection
+    match /trainingSamples/{sampleId} {
+      allow read, write: if true; // TODO: Add proper authentication
+    }
+    
+    // Extraction logs collection
+    match /extractionLogs/{logId} {
+      allow read, write: if true; // TODO: Add proper authentication
+    }
+  }
+}
+

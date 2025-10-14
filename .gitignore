@@ -15,6 +15,15 @@ build/
 .env.test.local
 .env.production.local
 
+# Credentials (Firebase admin keys, API keys)
+credentials/
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!firebase.json
+!vercel.json
+
 # IDE
 .vscode/
 .idea/

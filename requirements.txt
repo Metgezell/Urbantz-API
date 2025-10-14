@@ -1,0 +1,12 @@
+# Python dependencies voor Urbantz AI Document Scanner
+# Installeer met: pip install -r requirements.txt
+
+# Voor het laden van .env bestanden
+python-dotenv==1.0.0
+
+# Voor HTTP requests (gebruikt door urllib, maar als fallback)
+requests==2.31.0
+
+# Voor betere terminal output
+colorama==0.4.6
+

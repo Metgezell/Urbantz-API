@@ -1,19 +1,127 @@
-// Smart document analysis using AI for context understanding
-export default async function handler(req, res) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const multer = require('multer');
+require('dotenv').config();
+
+const app = express();
+const PORT = 3001;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
+
+// Multer for file uploads
+const upload = multer({ dest: 'uploads/' });
+
+// Urbantz Export endpoint for bulk task creation
+app.post('/api/urbantz-export', async (req, res) => {
+  try {
+    const deliveries = req.body;
+    
+    if (!Array.isArray(deliveries) || deliveries.length === 0) {
+      return res.status(400).json({ 
+        error: 'Expected array of deliveries' 
+      });
+    }
+    
+    console.log(`📦 Exporting ${deliveries.length} deliveries to Urbantz...`);
+    
+    const results = [];
+    const errors = [];
+    
+    // Process each delivery
+    for (const delivery of deliveries) {
+      try {
+        // Validation
+        if (!delivery.customerRef || !delivery.deliveryAddress?.line1) {
+          errors.push({
+            delivery: delivery.customerRef || 'Unknown',
+            error: 'customerRef and deliveryAddress.line1 are required'
+          });
+          continue;
+        }
+        
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Create Urbantz task
+        const taskResult = await createUrbantzTask(delivery);
+        
+        results.push({
+          success: true,
+          customerRef: delivery.customerRef,
+          taskId: taskResult.taskId,
+          message: 'Task created successfully'
+        });
+        
+      } catch (error) {
+        errors.push({
+          delivery: delivery.customerRef || 'Unknown',
+          error: error.message
+        });
+      }
+    }
+    
+    const response = {
+      success: true,
+      totalDeliveries: deliveries.length,
+      successful: results.length,
+      failed: errors.length,
+      results: results,
+      errors: errors,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log(`✅ Export completed: ${results.length} successful, ${errors.length} failed`);
+    res.json(response);
+    
+  } catch (error) {
+    console.error('Export error:', error);
+    res.status(500).json({ 
+      error: 'Export failed',
+      details: error.message 
+    });
   }
+});
+
+// Create individual Urbantz task
+async function createUrbantzTask(delivery) {
+  // This would be replaced with actual Urbantz API call
+  const taskId = `URBANTZ-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  // Simulate task creation in Urbantz system
+  const task = {
+    taskId: taskId,
+    customerRef: delivery.customerRef,
+    deliveryAddress: delivery.deliveryAddress,
+    serviceDate: delivery.serviceDate,
+    timeWindowStart: delivery.timeWindowStart,
+    timeWindowEnd: delivery.timeWindowEnd,
+    items: delivery.items || [{ description: 'Pakket', quantity: 1, tempClass: 'ambient' }],
+    notes: delivery.notes || '',
+    status: 'pending',
+    priority: delivery.priority || 'normal',
+    createdAt: new Date().toISOString(),
+    // Urbantz specific fields
+    vehicleType: 'van',
+    estimatedDuration: 30, // minutes
+    specialInstructions: delivery.notes || '',
+    contactPerson: {
+      name: delivery.deliveryAddress.contactName,
+      phone: delivery.deliveryAddress.contactPhone
+    }
+  };
   
+  // Log the created task (in real implementation, this would be sent to Urbantz API)
+  console.log(`✅ Created Urbantz task: ${taskId} for ${delivery.customerRef}`);
+  
+  return task;
+}
+
+// Smart AI analysis endpoint using Claude API
+app.post('/api/smart-analyze', async (req, res) => {
   try {
     const { text, htmlContent, fileType } = req.body;
     
@@ -21,16 +129,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No text provided' });
     }
     
+    console.log('🔍 Analyzing text with Claude AI...');
+    
     // If HTML content is provided and contains tables, parse it
     let processedText = text;
     if (htmlContent && htmlContent.includes('<table')) {
-      processedText = parseHTMLTables(htmlContent) + '\n\n' + text;
+      const tableText = parseHTMLTables(htmlContent);
+      if (tableText) {
+        processedText = tableText + '\n\n' + text;
+        console.log('📋 Parsed HTML tables');
+      }
     }
     
-    // Use AI to intelligently extract delivery information
-    const deliveries = await extractDeliveriesWithAI(processedText);
+    // Use Claude AI to intelligently extract delivery information
+    const deliveries = await extractDeliveriesWithClaude(processedText);
     
-    res.status(200).json({
+    res.json({
       success: true,
       confidence: deliveries.length > 0 ? 85 : 60,
       rawText: processedText,
@@ -47,10 +161,10 @@ export default async function handler(req, res) {
       details: error.message 
     });
   }
-}
+});
 
+// Helper function to parse HTML tables
 function parseHTMLTables(html) {
-  // Enhanced HTML table parser for delivery data
   try {
     const tableRegex = /<table[^>]*>([\s\S]*?)<\/table>/gi;
     const tables = [];
@@ -105,11 +219,55 @@ function parseHTMLTables(html) {
   }
 }
 
-async function extractDeliveriesWithAI(text) {
+// Document analysis endpoint
+app.post('/api/analyze-document', upload.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    
+    if (!file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+    
+    console.log('📄 Analyzing document:', file.originalname);
+    
+    // Simulate OCR and AI analysis
+    const mockText = `Levering informatie:
+    
+    Klant: CUST-12345
+    Adres: Koningstraat 15, 1000 Brussel
+    Contact: Jan Janssen (+32 2 123 4567)
+    Datum: 2024-01-15
+    Tijd: 09:00 - 12:00
+    
+    Items: 2x Pakketten, 1x Documenten`;
+    
+    const deliveries = await extractDeliveriesWithClaude(mockText);
+    
+    res.json({
+      success: true,
+      confidence: 90,
+      rawText: mockText,
+      deliveries: deliveries,
+      deliveryCount: deliveries.length,
+      multipleDeliveries: deliveries.length > 1,
+      fileName: file.originalname
+    });
+    
+  } catch (error) {
+    console.error('Document analysis error:', error);
+    res.status(500).json({ 
+      error: 'Document analysis failed',
+      details: error.message 
+    });
+  }
+});
+
+// AI-powered delivery extraction using Claude API
+async function extractDeliveriesWithClaude(text) {
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
   
   if (!ANTHROPIC_API_KEY) {
-    // Fallback to smart pattern matching
+    console.warn('⚠️ ANTHROPIC_API_KEY not found, falling back to pattern matching');
     return extractDeliveriesWithPatterns(text);
   }
   
@@ -230,6 +388,10 @@ Geef ALLEEN de JSON array terug, geen uitleg.
       })
     });
     
+    if (!response.ok) {
+      throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
+    }
+    
     const result = await response.json();
     
     if (result.content && result.content[0]) {
@@ -238,9 +400,11 @@ Geef ALLEEN de JSON array terug, geen uitleg.
       try {
         // Parse AI response as JSON
         const deliveries = JSON.parse(aiResponse);
+        console.log(`✅ Claude AI extracted ${Array.isArray(deliveries) ? deliveries.length : 1} delivery(ies)`);
         return Array.isArray(deliveries) ? deliveries : [deliveries];
       } catch (parseError) {
         console.error('Failed to parse Claude response:', parseError);
+        console.log('Claude response:', aiResponse);
         return extractDeliveriesWithPatterns(text);
       }
     }
@@ -248,12 +412,13 @@ Geef ALLEEN de JSON array terug, geen uitleg.
     return extractDeliveriesWithPatterns(text);
     
   } catch (error) {
-    console.error('Anthropic Claude API error:', error);
+    console.error('Claude API error:', error);
     return extractDeliveriesWithPatterns(text);
   }
 }
 
-function extractDeliveriesWithPatterns(text) {
+// Fallback pattern matching function
+async function extractDeliveriesWithPatterns(text) {
   const deliveries = [];
   
   // Smart section detection
@@ -282,22 +447,13 @@ function extractDeliveriesWithPatterns(text) {
 }
 
 function detectDeliverySections(text) {
-  const sections = [];
-  
-  // First try to detect numbered deliveries (1. REF:, 2. REF:, etc.)
-  const numberedDeliveryRegex = /(\d+\.\s+REF:\s+[A-Z0-9-]+[\s\S]*?(?=\d+\.\s+REF:|$))/g;
-  const numberedMatches = text.match(numberedDeliveryRegex);
-  
-  if (numberedMatches && numberedMatches.length > 0) {
-    sections.push(...numberedMatches);
-    return sections;
-  }
-  
   // Look for clear section separators
   const sectionPatterns = [
     /(?:lever|delivery|adres|address|klant|customer|order|bestelling)[\s\S]*?(?=(?:lever|delivery|adres|address|klant|customer|order|bestelling)|$)/gi,
     /(?:lever|delivery)[\s\S]*?(?=(?:lever|delivery)|$)/gi
   ];
+  
+  const sections = [];
   
   for (const pattern of sectionPatterns) {
     const matches = text.match(pattern);
@@ -317,7 +473,6 @@ function detectDeliverySections(text) {
 
 function extractSmartCustomerRef(section) {
   const patterns = [
-    /REF:\s*([A-Z0-9-]+)/i,  // Match "REF: TEST-REF-123" format
     /(?:klant|customer|ref|referentie|order|bestelling)[\s:]*([A-Z0-9-]+)/i,
     /([A-Z]{2,}\d{3,})/g,
     /(?:nr|nummer|number)[\s:]*([A-Z0-9-]+)/i
@@ -332,9 +487,7 @@ function extractSmartCustomerRef(section) {
 }
 
 function extractSmartAddress(section) {
-  // Look for address patterns with context
   const addressPatterns = [
-    /Adres:\s*([^\n\r]+)/i,  // Match "Adres: Rue de Test 10, Brussel 1000" format
     /(?:adres|address|leveradres|bezorgadres)[\s:]*([^\n\r]+(?:\n[^\n\r]+)*)/i,
     /([A-Za-z\s]+(?:straat|street|laan|avenue|plein|square|weg|road)\s+\d+[^\n\r]*)/i,
     /([A-Za-z\s]+\d+[A-Za-z]?\s*,\s*\d{4}\s+[A-Za-z\s]+)/i
@@ -361,7 +514,6 @@ function extractSmartAddress(section) {
 
 function extractContactName(section) {
   const patterns = [
-    /Klant:\s*([^\n\r]+)/i,  // Match "Klant: Maison Vert" format
     /(?:contact|naam|name|contactpersoon)[\s:]*([A-Za-z\s]+)/i,
     /([A-Z][a-z]+\s+[A-Z][a-z]+)/g
   ];
@@ -376,14 +528,13 @@ function extractContactName(section) {
 
 function extractPhone(section) {
   const phonePatterns = [
-    /Nummer:\s*(\+32\s?\d{2,3}\s?\d{2,3}\s?\d{2,3})/i,  // Match "Nummer: +32 470 11 22 33" format
     /(\+32\s?\d{2,3}\s?\d{2,3}\s?\d{2,3})/g,
     /(0\d{2,3}\s?\d{2,3}\s?\d{2,3})/g
   ];
   
   for (const pattern of phonePatterns) {
     const match = section.match(pattern);
-    if (match) return match[1] || match[0];  // Use group 1 if available, otherwise match 0
+    if (match) return match[0];
   }
   
   return "+32 000 000 000";
@@ -412,20 +563,6 @@ function extractSmartDate(section) {
     }
   }
   
-  // Look for date in mail header (e.g., "11 oktober 2025")
-  const dutchDateMatch = section.match(/(\d{1,2})\s+(januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december)\s+(\d{4})/i);
-  if (dutchDateMatch) {
-    const day = dutchDateMatch[1].padStart(2, '0');
-    const year = dutchDateMatch[3];
-    const monthMap = {
-      'januari': '01', 'februari': '02', 'maart': '03', 'april': '04',
-      'mei': '05', 'juni': '06', 'juli': '07', 'augustus': '08',
-      'september': '09', 'oktober': '10', 'november': '11', 'december': '12'
-    };
-    const month = monthMap[dutchDateMatch[2].toLowerCase()] || '01';
-    return `${year}-${month}-${day}`;
-  }
-  
   // Default to tomorrow
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -434,7 +571,6 @@ function extractSmartDate(section) {
 
 function extractSmartTimeStart(section) {
   const timePatterns = [
-    /Tijd:\s*(\d{1,2}:\d{2})\s*(?:-|tot)/i,  // Match "Tijd: 09:00 - 12:00" format
     /(?:tijd|time|tussen|van)[\s:]*(\d{1,2}:\d{2})/i,
     /(\d{1,2}:\d{2})\s*(?:tot|-)/i
   ];
@@ -449,7 +585,6 @@ function extractSmartTimeStart(section) {
 
 function extractSmartTimeEnd(section) {
   const timePatterns = [
-    /Tijd:\s*\d{1,2}:\d{2}\s*(?:-|tot)\s*(\d{1,2}:\d{2})/i,  // Match "Tijd: 09:00 - 12:00" format
     /(?:tot|until|tot)[\s:]*(\d{1,2}:\d{2})/i,
     /(\d{1,2}:\d{2})\s*(?:einde|end)/i
   ];
@@ -465,7 +600,6 @@ function extractSmartTimeEnd(section) {
 function extractSmartItems(section) {
   const items = [];
   
-  // Look for item patterns
   const itemPatterns = [
     /(?:items|pakketten|producten|artikelen)[\s:]*([^\n\r]+)/i,
     /(\d+\s*(?:x|stuks?|pakketten?|items?))/gi,
@@ -512,3 +646,14 @@ function determinePriority(section, index) {
   
   return index === 0 ? 'high' : 'normal';
 }
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Local server running at http://localhost:${PORT}`);
+  console.log(`📱 Open your browser and test the Urbantz API interface!`);
+  console.log(`🔧 API endpoint: http://localhost:${PORT}/api/urbantz`);
+});

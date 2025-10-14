@@ -147,6 +147,7 @@ function extractDeliveryInfo(text) {
 
 function extractCustomerRef(text) {
   const patterns = [
+    /REF:\s*([A-Z0-9-]+)/i,  // Match "REF: TEST-REF-123" format
     /(?:klant|customer|ref|referentie)[\s:]*([A-Z0-9-]+)/i,
     /(?:order|bestelling)[\s:]*([A-Z0-9-]+)/i,
     /([A-Z]{2,}\d{3,})/g
@@ -162,6 +163,7 @@ function extractCustomerRef(text) {
 
 function extractAddress(text) {
   const addressPatterns = [
+    /Adres:\s*([^\n\r]+)/i,  // Match "Adres: Rue de Test 10, Brussel 1000" format
     /(?:adres|address|leveradres)[\s:]*([^\n\r]+)/i,
     /([A-Za-z\s]+(?:straat|street|laan|avenue|plein|square)\s+\d+[^\n\r]*)/i,
     /([A-Za-z\s]+\d+[^\n\r]*)/i
@@ -187,6 +189,7 @@ function extractAddress(text) {
 
 function extractContactName(text) {
   const patterns = [
+    /Klant:\s*([^\n\r]+)/i,  // Match "Klant: Maison Vert" format
     /(?:contact|naam|name)[\s:]*([A-Za-z\s]+)/i,
     /([A-Z][a-z]+\s+[A-Z][a-z]+)/g
   ];
@@ -200,9 +203,18 @@ function extractContactName(text) {
 }
 
 function extractPhone(text) {
-  const phonePattern = /(\+32\s?\d{2,3}\s?\d{2,3}\s?\d{2,3})/g;
-  const match = text.match(phonePattern);
-  return match ? match[0] : "+32 000 000 000";
+  const phonePatterns = [
+    /Nummer:\s*(\+32\s?\d{2,3}\s?\d{2,3}\s?\d{2,3})/i,  // Match "Nummer: +32 470 11 22 33" format
+    /(\+32\s?\d{2,3}\s?\d{2,3}\s?\d{2,3})/g,
+    /(0\d{2,3}\s?\d{2,3}\s?\d{2,3})/g
+  ];
+  
+  for (const pattern of phonePatterns) {
+    const match = text.match(pattern);
+    if (match) return match[1] || match[0];  // Use group 1 if available, otherwise match 0
+  }
+  
+  return "+32 000 000 000";
 }
 
 function extractDate(text) {
@@ -235,15 +247,33 @@ function extractDate(text) {
 }
 
 function extractTimeStart(text) {
-  const timePattern = /(?:tijd|time|tussen)[\s:]*(\d{1,2}:\d{2})/i;
-  const match = text.match(timePattern);
-  return match ? match[1] : "09:00";
+  const timePatterns = [
+    /Tijd:\s*(\d{1,2}:\d{2})\s*(?:-|tot)/i,  // Match "Tijd: 09:00 - 12:00" format
+    /(?:tijd|time|tussen)[\s:]*(\d{1,2}:\d{2})/i,
+    /(\d{1,2}:\d{2})\s*(?:tot|-)/i
+  ];
+  
+  for (const pattern of timePatterns) {
+    const match = text.match(pattern);
+    if (match) return match[1];
+  }
+  
+  return "09:00";
 }
 
 function extractTimeEnd(text) {
-  const timePattern = /(?:tot|until)[\s:]*(\d{1,2}:\d{2})/i;
-  const match = text.match(timePattern);
-  return match ? match[1] : "17:00";
+  const timePatterns = [
+    /Tijd:\s*\d{1,2}:\d{2}\s*(?:-|tot)\s*(\d{1,2}:\d{2})/i,  // Match "Tijd: 09:00 - 12:00" format
+    /(?:tot|until)[\s:]*(\d{1,2}:\d{2})/i,
+    /(\d{1,2}:\d{2})\s*(?:einde|end)/i
+  ];
+  
+  for (const pattern of timePatterns) {
+    const match = text.match(pattern);
+    if (match) return match[1];
+  }
+  
+  return "17:00";
 }
 
 function extractItems(text) {

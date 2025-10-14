@@ -1,2011 +1,1642 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Urbantz API Client</title>
+    <title>Urbantz Import Export - AI Document Scanner</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* Dark theme colors */
+            --bg-dark: #0f172a;
+            --bg-dark-secondary: #1e293b;
+            --bg-dark-hover: #334155;
+            --sidebar-bg: #1a1d2e;
+            --sidebar-hover: #252a3d;
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --accent: #06b6d4;
+            --accent-light: #a5f3fc;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            --radius: 8px;
+            --radius-lg: 12px;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
         }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--sidebar-bg);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            z-index: 100;
         }
-        h1 {
-            color: #333;
+        
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid var(--border);
             text-align: center;
         }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            border-left: 4px solid #007bff;
-        }
-        .error {
-            border-left-color: #dc3545;
-            background-color: #f8d7da;
-        }
         
-        /* Drag & Drop Styles */
-        .drop-zone {
-            border: 3px dashed #007bff;
-            border-radius: 10px;
-            padding: 40px;
-            text-align: center;
-            background-color: #f8f9fa;
-            margin: 20px 0;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .drop-zone:hover {
-            background-color: #e3f2fd;
-            border-color: #0056b3;
-        }
-        
-        .drop-zone.dragover {
-            background-color: #e3f2fd;
-            border-color: #0056b3;
-            transform: scale(1.02);
-        }
-        
-        .drop-zone-icon {
-            font-size: 48px;
-            color: #007bff;
-            margin-bottom: 15px;
-        }
-        
-        .drop-zone-text {
-            font-size: 18px;
-            color: #333;
-            margin-bottom: 10px;
-        }
-        
-        .drop-zone-subtext {
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .uploaded-files {
-            margin-top: 20px;
-        }
-        
-        .file-item {
+        .logo-container {
             display: flex;
             align-items: center;
-            padding: 10px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 10px;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
         }
         
-        .file-icon {
-            font-size: 24px;
-            margin-right: 15px;
+        .logo-icon {
+            width: 3rem;
+            height: 3rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
         }
         
-        .file-info {
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .sidebar-subtitle {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        
+        /* Navigation */
+        .nav-menu {
+            flex: 1;
+            padding: 1.5rem 0;
+            overflow-y: auto;
+        }
+        
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.875rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .nav-link:hover {
+            background: var(--sidebar-hover);
+            color: var(--text-primary);
+        }
+        
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+        }
+        
+        .nav-link i {
+            font-size: 1.25rem;
+            width: 1.5rem;
+            text-align: center;
+        }
+        
+        .nav-link .chevron {
+            margin-left: auto;
+            font-size: 0.875rem;
+        }
+        
+        /* Sidebar Footer */
+        .sidebar-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: var(--bg-dark-secondary);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            background: var(--bg-dark-hover);
+        }
+        
+        .theme-label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-dark-secondary);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .user-profile:hover {
+            background: var(--bg-dark-hover);
+        }
+        
+        .user-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .user-info {
             flex: 1;
         }
         
-        .file-name {
-            font-weight: bold;
-            color: #333;
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
         }
         
-        .file-size {
-            font-size: 12px;
-            color: #666;
+        .user-email {
+            font-size: 0.75rem;
+            color: var(--text-muted);
         }
         
-        .file-actions {
+        .container {
+            margin-left: 280px;
+            flex: 1;
+            padding: 2rem;
+            width: calc(100% - 280px);
+        }
+        
+        /* Top Bar */
+        .top-bar {
+            background: var(--bg-dark-secondary);
+            padding: 1.5rem 2rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 2rem;
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
         }
         
-        .btn-small {
-            padding: 5px 10px;
-            font-size: 12px;
-            border: none;
-            border-radius: 3px;
+        .page-title-section h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .page-title-section p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+        
+        /* Content Cards */
+        .content-card {
+            background: var(--bg-dark-secondary);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .section-title i {
+            color: var(--primary);
+        }
+        
+        /* Import Section */
+        .import-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-lg);
+            padding: 3rem 2rem;
+            text-align: center;
+            background: var(--bg-dark);
+            transition: all 0.3s ease;
             cursor: pointer;
-        }
-        
-        .btn-analyze {
-            background-color: #007bff;
-            color: white;
-        }
-        
-        .btn-analyze:hover {
-            background-color: #0056b3;
-        }
-        
-        .btn-analyze:active {
-            background-color: #28a745;
-        }
-        
-        .btn-edit {
-            background-color: #ffc107;
-            color: #000;
-            border: none;
-            padding: 5px 8px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .btn-edit:hover {
-            background-color: #e0a800;
-        }
-        
-        /* Notification styles */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            animation: slideIn 0.3s ease-out;
-            max-width: 400px;
-        }
-        
-        .notification.success {
-            background-color: #28a745;
-        }
-        
-        .notification.error {
-            background-color: #dc3545;
-        }
-        
-        .notification.info {
-            background-color: #007bff;
-        }
-        
-        .notification.warning {
-            background-color: #ffc107;
-            color: #000;
-        }
-        
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
-        @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-        }
-        
-        .btn-remove {
-            background-color: #dc3545;
-            color: white;
-        }
-        
-        .analysis-result {
-            margin-top: 15px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            border-left: 4px solid #28a745;
-        }
-        
-        /* Text Input Section Styles */
-        .text-input-section {
-            margin: 30px 0;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            border: 1px solid #e0e0e0;
-        }
-        
-        .text-input-section h3 {
-            margin: 0 0 15px 0;
-            color: #333;
-            font-size: 18px;
-        }
-        
-        .text-input-container {
             position: relative;
         }
         
-        .text-input-container textarea {
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: var(--bg-dark-hover);
+        }
+        
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: var(--bg-dark-hover);
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            width: 4rem;
+            height: 4rem;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .upload-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .upload-formats {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .text-input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .text-input-section label {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .text-input-section textarea,
+        .text-input-section .editable-input {
             width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
+            min-height: 200px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.95rem;
             resize: vertical;
             transition: border-color 0.3s ease;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: inherit;
+            overflow-y: auto;
         }
         
-        .text-input-container textarea:focus {
+        .text-input-section textarea:focus,
+        .text-input-section .editable-input:focus {
             outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        .text-input-section .editable-input[contenteditable="true"]:empty:before {
+            content: attr(data-placeholder);
+            color: var(--text-muted);
+        }
+
+        /* Styling for pasted email content */
+        .editable-input p {
+            margin: 0.5rem 0;
+        }
+
+        .editable-input h1, .editable-input h2, .editable-input h3, 
+        .editable-input h4, .editable-input h5, .editable-input h6 {
+            margin: 1rem 0 0.5rem 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .editable-input h3 {
+            font-size: 1.1rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.25rem;
+        }
+
+        .editable-input ul, .editable-input ol {
+            margin: 0.5rem 0;
+            padding-left: 2rem;
+        }
+
+        .editable-input li {
+            margin: 0.25rem 0;
+        }
+
+        .editable-input strong, .editable-input b {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .editable-input hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 1rem 0;
+        }
+
+        /* Table styling for pasted content */
+        .editable-input table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            background: var(--bg-dark-secondary);
+        }
+
+        .editable-input table th,
+        .editable-input table td {
+            border: 1px solid var(--border);
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+        }
+
+        .editable-input table th {
+            background-color: var(--bg-dark);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .editable-input table tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .editable-input table tr:hover {
+            background-color: var(--bg-dark-hover);
         }
         
-        .text-actions {
-            margin-top: 10px;
+        .action-buttons {
             display: flex;
-            gap: 10px;
+            gap: 1rem;
+            margin-top: 1.5rem;
         }
         
-        #textAnalysisResult {
-            margin-top: 20px;
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-dark-hover);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #d97706;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        /* Data Grid */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .delivery-card {
+            background: var(--bg-dark-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .delivery-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+        
+        .delivery-card.selected {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .delivery-header {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .delivery-info {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .delivery-info strong {
+            color: var(--text-primary);
+        }
+        
+        .delivery-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .edit-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .edit-btn:hover {
+            background: #0891b2;
+            transform: translateY(-1px);
+        }
+        
+        .select-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .select-btn.unselected {
+            background: #475569;
+            color: #e2e8f0;
+            border: 1px solid #64748b;
+        }
+        
+        .select-btn.unselected:hover {
+            background: #64748b;
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .select-btn.selected {
+            background: var(--success);
+            color: white;
+        }
+        
+        .select-btn.selected:hover {
+            background: #059669;
+        }
+        
+        /* Export Section */
+        .export-stats {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .export-stats h4 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .stats-row {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .stat-badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .export-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .code-preview {
+            background: #0a0e1a;
+            color: #e2e8f0;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1.5rem;
+            border: 1px solid var(--border);
+        }
+        
+        .code-preview h4 {
+            color: var(--accent-light);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+        
+        .code-preview pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--bg-dark-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .modal h3 {
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            font-size: 1.3rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+            
+            .container {
+                margin-left: 240px;
+                width: calc(100% - 240px);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .container {
+                margin-left: 0;
+                width: 100%;
+                padding: 1rem;
+            }
+            
+            .import-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .export-controls {
+                flex-direction: column;
+            }
+            
+            .stats-row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .top-bar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 3rem 1rem;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <div class="logo-text">Urbantz</div>
+            </div>
+            <div class="sidebar-subtitle">Business Dashboard</div>
+        </div>
+        
+        <nav class="nav-menu">
+            <div class="nav-item">
+                <a href="index.html" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                    <i class="fas fa-chevron-right chevron"></i>
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="index.html" class="nav-link active">
+                    <i class="fas fa-file-import"></i>
+                    <span>Import/Export</span>
+                    <i class="fas fa-chevron-right chevron"></i>
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Leveringen</span>
+                    <i class="fas fa-chevron-right chevron"></i>
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="ai-training.html" class="nav-link">
+                    <i class="fas fa-brain"></i>
+                    <span>AI Training</span>
+                    <i class="fas fa-chevron-right chevron"></i>
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    <span>Klanten</span>
+                    <i class="fas fa-chevron-right chevron"></i>
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-trophy"></i>
+                    <span>Rapporten</span>
+                    <i class="fas fa-chevron-right chevron"></i>
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Facturatie</span>
+                    <i class="fas fa-chevron-right chevron"></i>
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-cog"></i>
+                    <span>Instellingen</span>
+                    <i class="fas fa-chevron-right chevron"></i>
+                </a>
+            </div>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="theme-toggle">
+                <div class="theme-label">
+                    <i class="fas fa-moon"></i>
+                    <span>Thema</span>
+                </div>
+                <i class="fas fa-sun"></i>
+            </div>
+            
+            <div class="user-profile">
+                <div class="user-avatar">ST</div>
+                <div class="user-info">
+                    <div class="user-name">Skyler Talley</div>
+                    <div class="user-email">skyler5500@...</div>
+                </div>
+                <i class="fas fa-sign-out-alt"></i>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
     <div class="container">
-        <h1>🚚 Urbantz API Client</h1>
-        <p>Test je Urbantz API integratie en upload documenten voor automatische verwerking</p>
-        
-        <!-- Document Upload Section -->
-        <div class="drop-zone" id="dropZone">
-            <div class="drop-zone-icon">📄</div>
-            <div class="drop-zone-text">Sleep documenten hierheen</div>
-            <div class="drop-zone-subtext">Ondersteunt: PDF, Excel, Word, afbeeldingen (JPG, PNG)</div>
-            <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.xls,.docx,.doc,.jpg,.jpeg,.png" style="display: none;">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="page-title-section">
+                <h1>Import/Export</h1>
+                <p>AI Document Scanner & Urbantz Export Tool</p>
+            </div>
         </div>
-        
-        <div class="uploaded-files" id="uploadedFiles"></div>
-        
-        <!-- Text Input Section -->
-        <div class="text-input-section">
-            <h3>📧 Of plak tekst uit een email</h3>
-            <div class="text-input-container">
-                <textarea 
-                    id="emailText" 
-                    placeholder="Plak hier tekst uit een email, leveringsinformatie, of andere tekst die je wilt analyseren..."
-                    rows="6"
-                ></textarea>
-                <div class="text-actions">
-                    <button type="button" class="btn-small btn-analyze" onclick="analyzeText()">🔍 Analyseer tekst</button>
-                    <button type="button" class="btn-small btn-remove" onclick="clearText()">🗑️ Wissen</button>
+
+        <!-- Import Section -->
+        <div class="content-card">
+            <h2 class="section-title">
+                <i class="fas fa-upload"></i>
+                Document Import
+            </h2>
+            <div class="import-grid">
+                <!-- File Upload Area -->
+                <div class="upload-area" id="fileUploadArea">
+                    <div class="upload-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="upload-text">Sleep bestanden hier of klik om te uploaden</div>
+                    <div class="upload-formats">PDF, Excel, Afbeeldingen</div>
+                    <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.xls,.png,.jpg,.jpeg" style="display: none;">
+                    </div>
+
+                <!-- Text Input Area -->
+                <div class="text-input-section">
+                    <label for="textInput">Of plak email tekst hier:</label>
+                    <div id="textInput" 
+                         class="editable-input" 
+                         contenteditable="true" 
+                         data-placeholder="Plak hier de tekst van een email of document...">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="scanWithAI">
+                            <span class="spinner hidden" id="aiSpinner"></span>
+                            <i class="fas fa-robot"></i>
+                            Scan met AI
+                        </button>
+                        <button class="btn btn-secondary" id="generateRandom">
+                            <i class="fas fa-dice"></i>
+                            Genereer Random Data
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div id="textAnalysisResult"></div>
+                    </div>
+
+        <!-- Data Display Section -->
+        <div class="content-card">
+            <h2 class="section-title">
+                <i class="fas fa-list"></i>
+                Geïmporteerde Leveringen
+            </h2>
+            <div id="dataGrid" class="data-grid">
+                <div class="no-data">
+                    <p>Nog geen leveringen geïmporteerd. Upload documenten of genereer test data.</p>
+                        </div>
+                        </div>
+                    </div>
+
+        <!-- Export Section -->
+        <div class="content-card">
+            <h2 class="section-title">
+                <i class="fas fa-download"></i>
+                Export naar Urbantz
+            </h2>
+            
+            <div class="export-stats" id="exportStats" style="display: none;">
+                <h4>Export Overzicht</h4>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-badge" id="totalCount">0</span>
+                        <span>Total</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-badge" id="selectedCount">0</span>
+                        <span>Geselecteerd</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-badge" id="readyCount">0</span>
+                        <span>Klaar voor Export</span>
+                            </div>
+                            </div>
+                        </div>
+
+            <div class="export-controls">
+                <button class="btn btn-success" id="exportSelected">
+                    <i class="fas fa-download"></i>
+                    Exporteer Geselecteerde
+                </button>
+                <button class="btn btn-primary" id="exportAll">
+                    <i class="fas fa-download"></i>
+                    Exporteer Alles
+                </button>
+                <button class="btn btn-warning" id="selectAll">
+                    <i class="fas fa-check-square"></i>
+                    Selecteer Alles
+                </button>
+                <button class="btn btn-secondary" id="deselectAll">
+                    <i class="fas fa-square"></i>
+                    Deselecteer Alles
+                </button>
+                <button class="btn btn-danger" id="clearAll">
+                    <i class="fas fa-trash"></i>
+                    Wis Alles
+                </button>
+                            </div>
+
+            <div class="code-preview" id="codePreview" style="display: none;">
+                <h4>Export Payload Preview:</h4>
+                <pre id="payloadCode"></pre>
+                            </div>
+                        </div>
+                    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Bevestiging</h3>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Weet je zeker dat je alle leveringen wilt wissen?</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-danger" id="confirmYes">
+                    <i class="fas fa-check"></i>
+                    Ja, Wis Alles
+                </button>
+                <button type="button" class="btn btn-secondary" id="confirmNo">
+                    <i class="fas fa-times"></i>
+                    Annuleren
+                </button>
+            </div>
         </div>
-        
-        <!-- Customer Selection Section -->
-        <div class="section">
-            <h3>🏢 Klant Selectie</h3>
-            <div class="form-group">
-                <label for="senderSelect">Verzender/Afzender:</label>
-                <select id="senderSelect" onchange="updateSenderInfo()">
-                    <option value="">Selecteer klant...</option>
-                    <option value="BD-Bike">BD Bike</option>
-                    <option value="Test-Klant">Test Klant</option>
-                    <option value="Demo-Company">Demo Company</option>
-                    <option value="Custom">Aangepast...</option>
-                </select>
-                <div id="customSenderInput" style="display: none; margin-top: 10px;">
-                    <input type="text" id="customSenderName" placeholder="Klant naam" style="width: 200px; margin-right: 10px;">
-                    <input type="text" id="customSenderEmail" placeholder="Email adres" style="width: 200px;">
-                </div>
-            </div>
-            <div id="senderInfo" style="display: none; background: #e8f5e8; padding: 10px; border-radius: 5px; margin-top: 10px;">
-                <strong>Geselecteerde klant:</strong> <span id="selectedSenderName"></span><br>
-                <strong>Email:</strong> <span id="selectedSenderEmail"></span>
-            </div>
-        </div>
-        
-        <!-- Test Data Section -->
-        <div class="section">
-            <h3>🧪 Test Data</h3>
-            <div class="form-group">
-                <p>Genereer voorbeeld leveringen voor demo doeleinden:</p>
-                <button type="button" class="btn-small btn-analyze" onclick="generateTestDeliveries()">🎯 Genereer 10 Test Leveringen</button>
-                <button type="button" class="btn-small btn-remove" onclick="clearTestData()">🗑️ Wissen Test Data</button>
-            </div>
-            <div id="testDataResult"></div>
-        </div>
-        
-        <form id="urbantzForm">
-            <div class="form-group">
-                <label for="apiKey">API Key:</label>
-                <input type="password" id="apiKey" placeholder="Voer je Urbantz API key in" value="test" required>
-                <small style="color: #666; font-size: 12px;">
-                    💡 Tip: Gebruik "test" voor test mode (veilig) of je echte API key voor productie
-                </small>
-            </div>
-            
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" id="testMode" checked> 
-                    🧪 Test Mode (veilig - geen echte leveringen)
-                </label>
-            </div>
-            
-            <div class="form-group">
-                <label for="customerRef">Customer Reference:</label>
-                <input type="text" id="customerRef" value="TEST-REF-123" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="deliveryAddress">Delivery Address:</label>
-                <textarea id="deliveryAddress" rows="3" required>Rue de Test 10, 1000 Bruxelles</textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="serviceDate">Service Date:</label>
-                <input type="date" id="serviceDate" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="timeWindowStart">Time Window Start:</label>
-                <input type="time" id="timeWindowStart" value="09:00" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="timeWindowEnd">Time Window End:</label>
-                <input type="time" id="timeWindowEnd" value="12:00" required>
-            </div>
-            
-            <button type="submit">Test Urbantz API</button>
-        </form>
-        
-        <div id="result"></div>
     </div>
 
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h3>
+                <i class="fas fa-edit"></i>
+                Bewerk Levering
+            </h3>
+            <form id="editForm">
+                            <div class="form-group">
+                    <label for="editCustomerRef">Klant Referentie:</label>
+                    <input type="text" id="editCustomerRef" required>
+                            </div>
+                            <div class="form-group">
+                    <label for="editAddress">Adres:</label>
+                    <input type="text" id="editAddress" required>
+                            </div>
+                <div class="form-group">
+                    <label for="editContactName">Contact Naam:</label>
+                    <input type="text" id="editContactName">
+                        </div>
+                            <div class="form-group">
+                    <label for="editContactPhone">Telefoon:</label>
+                    <input type="text" id="editContactPhone">
+                            </div>
+                            <div class="form-group">
+                    <label for="editTimeStart">Tijd Start:</label>
+                    <input type="time" id="editTimeStart">
+                            </div>
+                <div class="form-group">
+                    <label for="editTimeEnd">Tijd Eind:</label>
+                    <input type="time" id="editTimeEnd">
+                        </div>
+                            <div class="form-group">
+                    <label for="editServiceDate">Service Datum:</label>
+                    <input type="date" id="editServiceDate">
+                            </div>
+                            <div class="form-group">
+                    <label for="editNotes">Notities:</label>
+                    <textarea id="editNotes" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Opslaan
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancelEdit">
+                        <i class="fas fa-times"></i>
+                        Annuleren
+                    </button>
+                            </div>
+            </form>
+                        </div>
+                    </div>
+
     <script>
-        // Set today's date as default
-        document.getElementById('serviceDate').value = new Date().toISOString().split('T')[0];
-        
-        // File upload functionality
-        let uploadedFiles = [];
-        
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const uploadedFilesContainer = document.getElementById('uploadedFiles');
-        
-        // Drag and drop events
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', handleDragOver);
-        dropZone.addEventListener('dragleave', handleDragLeave);
-        dropZone.addEventListener('drop', handleDrop);
-        fileInput.addEventListener('change', handleFileSelect);
-        
-        function handleDragOver(e) {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        }
-        
-        function handleDragLeave(e) {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-        }
-        
-        function handleDrop(e) {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            const files = Array.from(e.dataTransfer.files);
-            processFiles(files);
-        }
-        
-        function handleFileSelect(e) {
-            const files = Array.from(e.target.files);
-            processFiles(files);
-        }
-        
-        function processFiles(files) {
-            files.forEach(file => {
-                if (isValidFileType(file)) {
-                    uploadedFiles.push({
-                        id: Date.now() + Math.random(),
-                        file: file,
-                        name: file.name,
-                        size: formatFileSize(file.size),
-                        type: getFileType(file.type),
-                        icon: getFileIcon(file.type)
-                    });
-                } else {
-                    showNotification(`Bestandstype niet ondersteund: ${file.name}`, 'error');
-                }
-            });
-            updateFileList();
-        }
-        
-        function isValidFileType(file) {
-            const validTypes = [
-                'application/pdf',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'application/vnd.ms-excel',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'application/msword',
-                'image/jpeg',
-                'image/jpg',
-                'image/png'
-            ];
-            return validTypes.includes(file.type);
-        }
-        
-        function getFileType(mimeType) {
-            const types = {
-                'application/pdf': 'PDF',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'Excel',
-                'application/vnd.ms-excel': 'Excel',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word',
-                'application/msword': 'Word',
-                'image/jpeg': 'Afbeelding',
-                'image/jpg': 'Afbeelding',
-                'image/png': 'Afbeelding'
-            };
-            return types[mimeType] || 'Onbekend';
-        }
-        
-        function getFileIcon(mimeType) {
-            const icons = {
-                'application/pdf': '📄',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '📊',
-                'application/vnd.ms-excel': '📊',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '📝',
-                'application/msword': '📝',
-                'image/jpeg': '🖼️',
-                'image/jpg': '🖼️',
-                'image/png': '🖼️'
-            };
-            return icons[mimeType] || '📄';
-        }
-        
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-        
-        function updateFileList() {
-            uploadedFilesContainer.innerHTML = '';
-            uploadedFiles.forEach(fileObj => {
-                const fileElement = document.createElement('div');
-                fileElement.className = 'file-item';
-                fileElement.innerHTML = `
-                    <div class="file-icon">${fileObj.icon}</div>
-                    <div class="file-info">
-                        <div class="file-name">${fileObj.name}</div>
-                        <div class="file-size">${fileObj.type} • ${fileObj.size}</div>
-                    </div>
-                    <div class="file-actions">
-                        <button class="btn-small btn-analyze" onclick="analyzeFile('${fileObj.id}')">🔍 Analyseren</button>
-                        <button class="btn-small btn-remove" onclick="removeFile('${fileObj.id}')">🗑️ Verwijderen</button>
-                    </div>
-                `;
-                uploadedFilesContainer.appendChild(fileElement);
-            });
-        }
-        
-        function removeFile(fileId) {
-            uploadedFiles = uploadedFiles.filter(f => f.id !== fileId);
-            updateFileList();
-        }
-        
-        function analyzeFile(fileId) {
-            const fileObj = uploadedFiles.find(f => f.id === fileId);
-            if (!fileObj) return;
-            
-            // Show loading state
-            const analyzeBtn = event.target;
-            const originalText = analyzeBtn.textContent;
-            analyzeBtn.textContent = '⏳ Analyseren...';
-            analyzeBtn.disabled = true;
-            
-            // Simulate AI analysis (replace with real API call later)
-            setTimeout(() => {
-                const mockAnalysis = generateMockAnalysis(fileObj);
-                showAnalysisResult(fileObj.id, mockAnalysis);
+        class ImportExportApp {
+            constructor() {
+                this.deliveries = [];
+                this.selectedDeliveries = new Set();
+                this.currentEditId = null;
                 
-                analyzeBtn.textContent = originalText;
-                analyzeBtn.disabled = false;
-            }, 2000);
-        }
-        
-        function generateMockAnalysis(fileObj) {
-            // Simulate multiple deliveries from one PDF
-            const numDeliveries = Math.floor(Math.random() * 3) + 1; // 1-3 deliveries
-            const deliveries = [];
-            
-            for (let i = 0; i < numDeliveries; i++) {
-                deliveries.push({
-                    taskId: `TASK-${Math.floor(Math.random() * 1000)}-${i + 1}`,
-                    customerRef: `CUST-${Math.floor(Math.random() * 1000)}-${i + 1}`,
-                    deliveryAddress: {
-                        line1: `Rue de Test ${123 + i}, 1000 Bruxelles`,
-                        contactName: `Contact ${i + 1}`,
-                        contactPhone: `+32 470 123 45${i}`
-                    },
-                    serviceDate: new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    timeWindowStart: `${9 + i}:00`,
-                    timeWindowEnd: `${17 + i}:00`,
-                    items: [
-                        { description: `Pakket ${i + 1}`, quantity: 1, tempClass: "ambient" },
-                        { description: `Extra item ${i + 1}`, quantity: 2, tempClass: "chilled" }
-                    ],
-                    notes: `Levering ${i + 1} uit ${fileObj.name}`,
-                    priority: i === 0 ? 'high' : 'normal'
-                });
+                this.init();
             }
-            
-            return {
-                confidence: Math.floor(Math.random() * 30) + 70, // 70-100%
-                extractedData: deliveries,
-                rawText: `Geëxtraheerde tekst uit ${fileObj.name}:\n\nGevonden ${numDeliveries} levering(en):\n${deliveries.map((d, i) => `${i + 1}. ${d.customerRef} - ${d.deliveryAddress.line1}`).join('\n')}`,
-                multipleDeliveries: true,
-                deliveryCount: numDeliveries
-            };
-        }
-        
-        function showAnalysisResult(fileId, analysis) {
-            const fileObj = uploadedFiles.find(f => f.id === fileId);
-            const fileElement = event.target.closest('.file-item');
-            
-            const resultDiv = document.createElement('div');
-            resultDiv.className = 'analysis-result';
-            
-            if (analysis.multipleDeliveries) {
-                // Show multiple deliveries
-                resultDiv.innerHTML = `
-                    <h4>🔍 Analyse Resultaat (${analysis.confidence}% zekerheid)</h4>
-                    <p><strong>📦 Gevonden ${analysis.deliveryCount} levering(en) in dit document:</strong></p>
-                    <div style="margin: 10px 0;">
-                        ${analysis.extractedData.map((delivery, index) => `
-                            <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
-                                <strong>Levering ${index + 1}:</strong> ${delivery.customerRef}<br>
-                                <small>📍 ${delivery.deliveryAddress.line1}</small><br>
-                                <small>📅 ${delivery.serviceDate} ${delivery.timeWindowStart}-${delivery.timeWindowEnd}</small>
-                                <button class="btn-small btn-analyze" onclick="useSpecificDelivery('${fileId}', ${index})" style="margin-left: 10px;">✅ Gebruik deze</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <p><strong>Geëxtraheerde tekst:</strong></p>
-                    <pre style="background: #f1f1f1; padding: 10px; border-radius: 5px; font-size: 12px;">${analysis.rawText}</pre>
-                    <button class="btn-small btn-analyze" onclick="useAllDeliveries('${fileId}')">🚀 Verwerk alle leveringen</button>
-                `;
-            } else {
-                // Single delivery (old format)
-                resultDiv.innerHTML = `
-                    <h4>🔍 Analyse Resultaat (${analysis.confidence}% zekerheid)</h4>
-                    <p><strong>Geëxtraheerde tekst:</strong></p>
-                    <pre style="background: #f1f1f1; padding: 10px; border-radius: 5px; font-size: 12px;">${analysis.rawText}</pre>
-                    <p><strong>Gevonden data:</strong></p>
-                    <pre style="background: #e8f5e8; padding: 10px; border-radius: 5px; font-size: 12px;">${JSON.stringify(analysis.extractedData, null, 2)}</pre>
-                    <button class="btn-small btn-analyze" onclick="useExtractedData('${fileId}')">✅ Gebruik deze data</button>
-                `;
+
+            init() {
+                this.setupEventListeners();
+                this.loadFromStorage();
+                this.updateUI();
             }
-            
-            // Remove existing result if any
-            const existingResult = fileElement.querySelector('.analysis-result');
-            if (existingResult) {
-                existingResult.remove();
-            }
-            
-            fileElement.appendChild(resultDiv);
-        }
-        
-        function useExtractedData(fileId) {
-            const fileObj = uploadedFiles.find(f => f.id === fileId);
-            if (!fileObj || !fileObj.analysis) return;
-            
-            const data = fileObj.analysis.extractedData;
-            
-            // Fill form with extracted data
-            document.getElementById('customerRef').value = data.customerRef;
-            document.getElementById('deliveryAddress').value = data.deliveryAddress.line1;
-            document.getElementById('serviceDate').value = data.serviceDate;
-            document.getElementById('timeWindowStart').value = data.timeWindowStart;
-            document.getElementById('timeWindowEnd').value = data.timeWindowEnd;
-            
-            // Show success message
-            showNotification('✅ Data succesvol ingevuld in het formulier!', 'success');
-        }
-        
-        function useSpecificDelivery(fileId, deliveryIndex) {
-            const fileObj = uploadedFiles.find(f => f.id === fileId);
-            if (!fileObj || !fileObj.analysis) return;
-            
-            const delivery = fileObj.analysis.extractedData[deliveryIndex];
-            
-            // Fill form with specific delivery data
-            document.getElementById('customerRef').value = delivery.customerRef;
-            document.getElementById('deliveryAddress').value = delivery.deliveryAddress.line1;
-            document.getElementById('serviceDate').value = delivery.serviceDate;
-            document.getElementById('timeWindowStart').value = delivery.timeWindowStart;
-            document.getElementById('timeWindowEnd').value = delivery.timeWindowEnd;
-            
-            // Update button to show it's in use
-            updateFileDeliveryButton(fileId, deliveryIndex, true);
-            
-            // Show success message
-            showNotification(`✅ Levering ${deliveryIndex + 1} succesvol ingevuld in het formulier!`, 'success');
-        }
-        
-        function updateFileDeliveryButton(fileId, deliveryIndex, isUsed) {
-            // Find the specific button for this file and delivery
-            const buttons = document.querySelectorAll(`[onclick="useSpecificDelivery('${fileId}', ${deliveryIndex})"]`);
-            
-            buttons.forEach(button => {
-                if (isUsed) {
-                    // Mark as used
-                    button.innerHTML = '✅ In gebruik';
-                    button.style.backgroundColor = '#28a745';
-                    button.style.color = 'white';
-                    button.disabled = true;
-                    button.onclick = null; // Remove click handler
-                } else {
-                    // Reset to normal
-                    button.innerHTML = '🔍 Gebruik deze levering';
-                    button.style.backgroundColor = '#007bff';
-                    button.style.color = 'white';
-                    button.disabled = false;
-                    button.onclick = () => useSpecificDelivery(fileId, deliveryIndex); // Restore click handler
-                }
-            });
-        }
-        
-        function useAllDeliveries(fileId) {
-            const fileObj = uploadedFiles.find(f => f.id === fileId);
-            if (!fileObj || !fileObj.analysis) return;
-            
-            const deliveries = fileObj.analysis.extractedData;
-            
-            if (confirm(`Wil je alle ${deliveries.length} leveringen verwerken? Dit zal ${deliveries.length} API calls maken.`)) {
-                processMultipleDeliveries(deliveries);
-            }
-        }
-        
-        async function processMultipleDeliveries(deliveries) {
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = '<div class="result">🚀 Verwerken van meerdere leveringen...</div>';
-            
-            const results = [];
-            
-            for (let i = 0; i < deliveries.length; i++) {
-                const delivery = deliveries[i];
+
+            setupEventListeners() {
+                // File upload
+                const fileUploadArea = document.getElementById('fileUploadArea');
+                const fileInput = document.getElementById('fileInput');
                 
-                try {
-                    const response = await fetch('/api/urbantz', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-API-Key': document.getElementById('apiKey').value
-                        },
-                        body: JSON.stringify(delivery)
+                fileUploadArea.addEventListener('click', () => fileInput.click());
+                fileUploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
+                fileUploadArea.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                fileUploadArea.addEventListener('drop', this.handleDrop.bind(this));
+                fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+
+                // Text input paste handler to preserve tables
+                const textInput = document.getElementById('textInput');
+                textInput.addEventListener('paste', this.handlePaste.bind(this));
+
+                // AI Scan
+                document.getElementById('scanWithAI').addEventListener('click', this.scanWithAI.bind(this));
+                
+                // Random data
+                document.getElementById('generateRandom').addEventListener('click', this.generateRandomData.bind(this));
+
+                // Export controls
+                document.getElementById('exportSelected').addEventListener('click', () => this.exportDeliveries(true));
+                document.getElementById('exportAll').addEventListener('click', () => this.exportDeliveries(false));
+                document.getElementById('selectAll').addEventListener('click', this.selectAll.bind(this));
+                document.getElementById('deselectAll').addEventListener('click', this.deselectAll.bind(this));
+                document.getElementById('clearAll').addEventListener('click', this.clearAll.bind(this));
+
+                // Confirmation modal
+                document.getElementById('confirmYes').addEventListener('click', this.confirmClearAll.bind(this));
+                document.getElementById('confirmNo').addEventListener('click', this.closeConfirmModal.bind(this));
+
+                // Edit modal
+                document.getElementById('cancelEdit').addEventListener('click', this.closeEditModal.bind(this));
+                document.getElementById('editForm').addEventListener('submit', this.saveEdit.bind(this));
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                document.getElementById('fileUploadArea').classList.add('dragover');
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                document.getElementById('fileUploadArea').classList.remove('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                document.getElementById('fileUploadArea').classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                this.processFiles(files);
+            }
+
+            handleFileSelect(e) {
+                const files = Array.from(e.target.files);
+                this.processFiles(files);
+            }
+
+            handlePaste(e) {
+                // Get clipboard data
+                const clipboardData = e.clipboardData || window.clipboardData;
+                
+                // Get HTML content if available
+                const htmlData = clipboardData.getData('text/html');
+                const textData = clipboardData.getData('text/plain');
+                
+                if (htmlData && htmlData.includes('<table')) {
+                    // Prevent default paste behavior
+                    e.preventDefault();
+                    
+                    // Parse HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlData, 'text/html');
+                    
+                    // Clean up the entire HTML content: remove unwanted attributes but keep structure
+                    const allElements = doc.body.querySelectorAll('*');
+                    allElements.forEach(el => {
+                        // Remove style attributes but keep the structure
+                        el.removeAttribute('style');
+                        el.removeAttribute('class');
+                        el.removeAttribute('id');
+                        el.removeAttribute('width');
+                        el.removeAttribute('height');
+                        el.removeAttribute('bgcolor');
+                        el.removeAttribute('align');
+                        el.removeAttribute('valign');
                     });
                     
-                    const result = await response.json();
-                    results.push({
-                        delivery: i + 1,
-                        success: response.ok,
-                        result: result
-                    });
-                    
-                    // Update progress
-                    resultDiv.innerHTML = `
-                        <div class="result">
-                            🚀 Verwerken van leveringen... (${i + 1}/${deliveries.length})
-                            <br><small>Laatste: ${delivery.customerRef}</small>
-                        </div>
-                    `;
-                    
-                } catch (error) {
-                    results.push({
-                        delivery: i + 1,
-                        success: false,
-                        error: error.message
-                    });
-                }
-                
-                // Small delay between requests
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-            
-            // Show final results
-            const successCount = results.filter(r => r.success).length;
-            const failureCount = results.filter(r => !r.success).length;
-            
-            resultDiv.innerHTML = `
-                <div class="result">
-                    <h4>📦 Verwerking Voltooid</h4>
-                    <p><strong>✅ Succesvol:</strong> ${successCount} leveringen</p>
-                    <p><strong>❌ Gefaald:</strong> ${failureCount} leveringen</p>
-                    <details style="margin-top: 10px;">
-                        <summary>Details per levering</summary>
-                        <pre style="background: #f1f1f1; padding: 10px; border-radius: 5px; font-size: 12px; margin-top: 10px;">${JSON.stringify(results, null, 2)}</pre>
-                    </details>
-                </div>
-            `;
-        }
-        
-        // Text analysis functionality
-        async function analyzeText() {
-            const text = document.getElementById('emailText').value.trim();
-            if (!text) {
-                showNotification('Voer eerst tekst in om te analyseren!', 'warning');
-                return;
-            }
-            
-            const analyzeBtn = event.target;
-            const originalText = analyzeBtn.textContent;
-            analyzeBtn.textContent = '⏳ AI Analyseren...';
-            analyzeBtn.disabled = true;
-            
-            try {
-                // Call smart AI analysis
-                const response = await fetch('/api/smart-analyze', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        text: text,
-                        fileType: 'text'
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`AI API error: ${response.status}`);
-                }
-                
-                const analysis = await response.json();
-                showTextAnalysisResult(analysis);
-                
-            } catch (error) {
-                console.error('AI analysis error:', error);
-                
-                // Fallback to pattern matching
-                const fallbackAnalysis = analyzeEmailText(text);
-                showTextAnalysisResult(fallbackAnalysis);
-                
-                showNotification(`⚠️ AI analyse gefaald, gebruik fallback: ${error.message}`, 'warning');
-            }
-            
-            analyzeBtn.textContent = originalText;
-            analyzeBtn.disabled = false;
-        }
-        
-        function clearText() {
-            document.getElementById('emailText').value = '';
-            document.getElementById('textAnalysisResult').innerHTML = '';
-            
-            // Reset all delivery buttons
-            resetAllDeliveryButtons();
-        }
-        
-        function resetAllDeliveryButtons() {
-            // Reset all "Gebruik deze levering" buttons to normal state
-            const allButtons = document.querySelectorAll('[onclick*="useSpecificDelivery"]');
-            allButtons.forEach(button => {
-                button.innerHTML = '🔍 Gebruik deze levering';
-                button.style.backgroundColor = '#007bff';
-                button.style.color = 'white';
-                button.disabled = false;
-            });
-        }
-        
-        function analyzeEmailText(text) {
-            // Simple pattern matching for common delivery information
-            const patterns = {
-                customerRef: /(?:klant|customer|ref|referentie)[\s:]*([A-Z0-9-]+)/i,
-                address: /(?:adres|address|leveradres)[\s:]*([^\n\r]+)/i,
-                contactName: /(?:contact|naam|name)[\s:]*([^\n\r]+)/i,
-                phone: /(?:tel|telefoon|phone)[\s:]*([+\d\s-]+)/i,
-                date: /(?:datum|date|leverdatum)[\s:]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|\d{4}-\d{2}-\d{2})/i,
-                time: /(?:tijd|time|tussen)[\s:]*(\d{1,2}:\d{2})/i,
-                items: /(?:items|pakketten|producten)[\s:]*([^\n\r]+)/i
-            };
-            
-            const extracted = {};
-            Object.keys(patterns).forEach(key => {
-                const match = text.match(patterns[key]);
-                if (match) {
-                    extracted[key] = match[1].trim();
-                }
-            });
-            
-            // Generate mock structured data
-            const mockData = {
-                customerRef: extracted.customerRef || `EMAIL-${Math.floor(Math.random() * 1000)}`,
-                deliveryAddress: {
-                    line1: extracted.address || "Geëxtraheerd adres uit email",
-                    contactName: extracted.contactName || "Contact persoon",
-                    contactPhone: extracted.phone || "+32 470 000 000"
-                },
-                serviceDate: extracted.date || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                timeWindowStart: extracted.time || "09:00",
-                timeWindowEnd: "17:00",
-                items: [
-                    { description: extracted.items || "Pakket uit email", quantity: 1, tempClass: "ambient" }
-                ],
-                notes: `Geanalyseerd uit email tekst`
-            };
-            
-            return {
-                confidence: Math.floor(Math.random() * 25) + 75, // 75-100%
-                extractedData: mockData,
-                rawText: text,
-                foundPatterns: Object.keys(extracted),
-                analysis: {
-                    hasAddress: !!extracted.address,
-                    hasContact: !!extracted.contactName,
-                    hasDate: !!extracted.date,
-                    hasPhone: !!extracted.phone,
-                    wordCount: text.split(/\s+/).length
-                }
-            };
-        }
-        
-        function showTextAnalysisResult(analysis) {
-            const resultDiv = document.getElementById('textAnalysisResult');
-            
-            console.log('showTextAnalysisResult called with:', analysis);
-            
-            // Handle both AI response and fallback response structures
-            let deliveries = [];
-            let confidence = 60;
-            
-            if (analysis.deliveries && Array.isArray(analysis.deliveries)) {
-                deliveries = analysis.deliveries;
-                confidence = analysis.confidence || 85;
-            } else if (analysis.analysis && analysis.analysis.deliveries && Array.isArray(analysis.analysis.deliveries)) {
-                deliveries = analysis.analysis.deliveries;
-                confidence = analysis.confidence || 85;
-            } else if (Array.isArray(analysis)) {
-                // Direct array of deliveries
-                deliveries = analysis;
-                confidence = 90;
-            }
-            
-            const deliveryCount = deliveries.length;
-            console.log('Processed deliveries:', deliveries, 'Count:', deliveryCount);
-            
-            if (deliveryCount > 0) {
-                // AI found deliveries
-                resultDiv.innerHTML = `
-                    <div class="analysis-result">
-                        <h4>🔍 AI Analyse Resultaat (${confidence}% zekerheid)</h4>
-                        <p><strong>📦 Gevonden ${deliveryCount} levering(en):</strong></p>
-                        <div style="background: #e8f4fd; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 12px;">
-                            <strong>Debug Info:</strong> ${deliveryCount} deliveries gevonden<br>
-                            <strong>Data structuur:</strong> ${JSON.stringify(deliveries.slice(0, 1), null, 2)}
-                        </div>
-                        <div style="margin: 10px 0;">
-                            ${deliveries.map((delivery, index) => {
-                                console.log(`Rendering delivery ${index}:`, delivery);
-                                
-                                // Handle different address formats
-                                let address = 'N/A';
-                                if (delivery.deliveryAddress) {
-                                    if (typeof delivery.deliveryAddress === 'string') {
-                                        address = delivery.deliveryAddress;
-                                    } else if (delivery.deliveryAddress.line1) {
-                                        address = delivery.deliveryAddress.line1;
-                                    }
-                                }
-                                
-                                return `
-                                <div data-delivery-index="${index}" style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
-                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                        <div style="flex: 1;">
-                                            <strong>Levering ${index + 1}:</strong> ${delivery.customerRef || 'N/A'}<br>
-                                            <strong>Adres:</strong> ${address}<br>
-                                            <strong>Datum:</strong> ${delivery.serviceDate || 'N/A'}<br>
-                                            <strong>Tijd:</strong> ${delivery.timeWindowStart || 'N/A'} - ${delivery.timeWindowEnd || 'N/A'}
-                                        </div>
-                                        <div style="margin-left: 10px;">
-                                            <button class="btn-small btn-edit" onclick="editDelivery(${index})" title="Bewerk deze levering">✏️</button>
-                                        </div>
-                                    </div>
-                                    <div style="margin-top: 10px; text-align: center;">
-                                        <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})" style="background-color: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">🔍 Gebruik deze levering</button>
-                                    </div>
-                                </div>
-                            `;
-                            }).join('')}
-                        </div>
-                        ${deliveryCount > 1 ? `
-                            <div style="margin-top: 15px;">
-                                <button class="btn-small btn-primary" onclick="processAllDeliveries()">🚀 Verwerk alle leveringen</button>
-                            </div>
-                        ` : ''}
-                        <div style="margin-top: 15px;">
-                            <button class="btn-small btn-remove" onclick="clearTextAnalysis()">🗑️ Wissen</button>
-                        </div>
-                    </div>
-                `;
-                
-                // Store analysis for later use
-                window.lastTextAnalysis = analysis;
-                
-                // Save to localStorage
-                saveToLocalStorage('lastTextAnalysis', analysis);
-            } else {
-                // Fallback pattern matching result
-                const patternInfo = analysis.foundPatterns ? analysis.foundPatterns.join(', ') : 'Geen specifieke patronen gevonden';
-                
-                resultDiv.innerHTML = `
-                    <div class="analysis-result">
-                        <h4>🔍 Tekst Analyse Resultaat (${confidence}% zekerheid)</h4>
-                        <div style="margin: 10px 0;">
-                            <strong>Analyse:</strong> ${analysis.analysis?.wordCount || 0} woorden, 
-                            ${analysis.analysis?.hasAddress ? '✅ Adres gevonden' : '❌ Geen adres'}, 
-                            ${analysis.analysis?.hasContact ? '✅ Contact gevonden' : '❌ Geen contact'}, 
-                            ${analysis.analysis?.hasDate ? '✅ Datum gevonden' : '❌ Geen datum'}
-                        </div>
-                        <p><strong>Gevonden patronen: ${patternInfo}</strong></p>
-                        <p><strong>Geëxtraheerde data:</strong></p>
-                        <pre style="background: #e8f5e8; padding: 10px; border-radius: 5px; font-size: 12px;">${JSON.stringify(analysis.extractedData || {}, null, 2)}</pre>
-                        <div style="margin-top: 15px;">
-                            <button class="btn-small btn-analyze" onclick="useTextExtractedData()">✅ Gebruik deze data</button>
-                            <button class="btn-small btn-remove" onclick="clearTextAnalysis()">🗑️ Wissen</button>
-                        </div>
-                    </div>
-                `;
-                
-                // Store analysis for later use
-                window.lastTextAnalysis = analysis;
-                
-                // Save to localStorage
-                saveToLocalStorage('lastTextAnalysis', analysis);
-            }
-        }
-        
-        function useTextExtractedData() {
-            if (!window.lastTextAnalysis) return;
-            
-            const data = window.lastTextAnalysis.extractedData;
-            
-            // Fill form with extracted data
-            document.getElementById('customerRef').value = data.customerRef;
-            document.getElementById('deliveryAddress').value = data.deliveryAddress.line1;
-            document.getElementById('serviceDate').value = data.serviceDate;
-            document.getElementById('timeWindowStart').value = data.timeWindowStart;
-            document.getElementById('timeWindowEnd').value = data.timeWindowEnd;
-            
-            // Show success message
-            showNotification('✅ Data succesvol ingevuld in het formulier!', 'success');
-        }
-        
-        function clearTextAnalysis() {
-            document.getElementById('textAnalysisResult').innerHTML = '';
-            window.lastTextAnalysis = null;
-            localStorage.removeItem('lastTextAnalysis');
-            
-            // Reset all delivery buttons
-            resetAllDeliveryButtons();
-        }
-        
-        // Customer selection functionality
-        function updateSenderInfo() {
-            const select = document.getElementById('senderSelect');
-            const customInput = document.getElementById('customSenderInput');
-            const senderInfo = document.getElementById('senderInfo');
-            const selectedName = document.getElementById('selectedSenderName');
-            const selectedEmail = document.getElementById('selectedSenderEmail');
-            
-            if (select.value === 'Custom') {
-                customInput.style.display = 'block';
-                senderInfo.style.display = 'none';
-            } else if (select.value) {
-                customInput.style.display = 'none';
-                senderInfo.style.display = 'block';
-                
-                // Set customer info based on selection
-                const customerData = getCustomerData(select.value);
-                selectedName.textContent = customerData.name;
-                selectedEmail.textContent = customerData.email;
-            } else {
-                customInput.style.display = 'none';
-                senderInfo.style.display = 'none';
-            }
-            
-            // Save sender selection to localStorage
-            const senderData = {
-                value: select.value,
-                custom: select.value === 'Custom',
-                name: select.value === 'Custom' ? document.getElementById('customSenderName').value : getCustomerData(select.value).name,
-                email: select.value === 'Custom' ? document.getElementById('customSenderEmail').value : getCustomerData(select.value).email
-            };
-            saveToLocalStorage('selectedSender', senderData);
-        }
-        
-        function getCustomerData(customerId) {
-            const customers = {
-                'BD-Bike': { name: 'BD Bike', email: 'info@bdbike.com' },
-                'Test-Klant': { name: 'Test Klant', email: 'test@example.com' },
-                'Demo-Company': { name: 'Demo Company', email: 'demo@company.com' }
-            };
-            return customers[customerId] || { name: 'Onbekend', email: 'onbekend@example.com' };
-        }
-        
-        function getSelectedSender() {
-            const select = document.getElementById('senderSelect');
-            if (select.value === 'Custom') {
-                const name = document.getElementById('customSenderName').value;
-                const email = document.getElementById('customSenderEmail').value;
-                return { name: name || 'Aangepaste klant', email: email || 'onbekend@example.com' };
-            } else if (select.value) {
-                return getCustomerData(select.value);
-            }
-            return null;
-        }
-        
-        function useSpecificDelivery(index) {
-            console.log('useSpecificDelivery called with index:', index);
-            
-            if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) {
-                console.error('No analysis data available');
-                showNotification('Geen analyse data beschikbaar', 'error');
-                return;
-            }
-            
-            const delivery = window.lastTextAnalysis.deliveries[index];
-            if (!delivery) {
-                console.error('Delivery not found at index:', index);
-                showNotification('Levering niet gevonden', 'error');
-                return;
-            }
-            
-            console.log('Using delivery:', delivery);
-            
-            // Fill form with specific delivery data
-            const customerRefField = document.getElementById('customerRef');
-            const deliveryAddressField = document.getElementById('deliveryAddress');
-            const serviceDateField = document.getElementById('serviceDate');
-            const timeWindowStartField = document.getElementById('timeWindowStart');
-            const timeWindowEndField = document.getElementById('timeWindowEnd');
-            
-            if (customerRefField) customerRefField.value = delivery.customerRef || '';
-            if (deliveryAddressField) deliveryAddressField.value = delivery.deliveryAddress?.line1 || '';
-            if (serviceDateField) serviceDateField.value = delivery.serviceDate || '';
-            if (timeWindowStartField) timeWindowStartField.value = delivery.timeWindowStart || '';
-            if (timeWindowEndField) timeWindowEndField.value = delivery.timeWindowEnd || '';
-            
-            // Update button to show it's in use
-            updateDeliveryButton(index, true);
-            
-            // Show success message
-            const resultDiv = document.getElementById('result');
-            if (resultDiv) {
-                resultDiv.innerHTML = `
-                    <div class="result">
-                        <h3>✅ Levering ${index + 1} geselecteerd</h3>
-                        <p><strong>Klant:</strong> ${delivery.customerRef}</p>
-                        <p><strong>Adres:</strong> ${delivery.deliveryAddress?.line1}</p>
-                        <p><strong>Datum:</strong> ${delivery.serviceDate}</p>
-                        <p><strong>Tijd:</strong> ${delivery.timeWindowStart} - ${delivery.timeWindowEnd}</p>
-                        <br><small>Data is ingevuld in het formulier hieronder</small>
-                    </div>
-                `;
-            }
-            
-            // Show success message
-            showNotification('✅ Data succesvol ingevuld in het formulier!', 'success');
-        }
-        
-        function updateDeliveryButton(index, isUsed) {
-            // Find all buttons for this delivery index
-            const buttons = document.querySelectorAll(`[onclick="useSpecificDelivery(${index})"]`);
-            
-            buttons.forEach(button => {
-                if (isUsed) {
-                    // Mark as used
-                    button.innerHTML = '✅ In gebruik';
-                    button.style.backgroundColor = '#28a745';
-                    button.style.color = 'white';
-                    button.disabled = true;
-                    button.onclick = null; // Remove click handler
-                } else {
-                    // Reset to normal
-                    button.innerHTML = '🔍 Gebruik deze levering';
-                    button.style.backgroundColor = '#007bff';
-                    button.style.color = 'white';
-                    button.disabled = false;
-                    button.onclick = () => useSpecificDelivery(index); // Restore click handler
-                }
-            });
-        }
-        
-        function editDelivery(index) {
-            console.log('editDelivery called with index:', index);
-            
-            // Find the delivery card element
-            const deliveryCards = document.querySelectorAll('[data-delivery-index]');
-            const targetCard = Array.from(deliveryCards).find(card => 
-                parseInt(card.getAttribute('data-delivery-index')) === index
-            );
-            
-            if (!targetCard) {
-                console.error('Delivery card not found for index:', index);
-                showNotification('Levering kaart niet gevonden', 'error');
-                return;
-            }
-            
-            // Toggle edit mode
-            const isEditing = targetCard.classList.contains('editing');
-            
-            if (isEditing) {
-                // Save changes
-                saveInlineEdit(index, targetCard);
-            } else {
-                // Enter edit mode
-                enterInlineEdit(index, targetCard);
-            }
-        }
-        
-        function enterInlineEdit(index, card) {
-            // Get current delivery data
-            const testData = JSON.parse(localStorage.getItem('testData') || 'null');
-            let delivery = null;
-            
-            if (testData && testData.deliveries && testData.deliveries[index]) {
-                delivery = testData.deliveries[index];
-            } else if (window.lastTextAnalysis && window.lastTextAnalysis.deliveries && window.lastTextAnalysis.deliveries[index]) {
-                delivery = window.lastTextAnalysis.deliveries[index];
-            }
-            
-            if (!delivery) {
-                showNotification('Levering data niet gevonden', 'error');
-                return;
-            }
-            
-            // Add editing class
-            card.classList.add('editing');
-            
-            // Replace content with inline edit form
-            card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div style="flex: 1;">
-                        <div style="margin-bottom: 8px;">
-                            <strong>Levering ${index + 1}:</strong> 
-                            <input type="text" id="inline-customerRef-${index}" value="${delivery.customerRef || ''}" style="width: 200px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; margin-left: 5px;">
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong>Adres:</strong> 
-                            <input type="text" id="inline-deliveryAddress-${index}" value="${delivery.deliveryAddress?.line1 || ''}" style="width: 300px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; margin-left: 5px;">
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong>Contact:</strong> 
-                            <input type="text" id="inline-contactName-${index}" value="${delivery.deliveryAddress?.contactName || ''}" style="width: 150px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; margin-left: 5px;">
-                            <input type="text" id="inline-contactPhone-${index}" value="${delivery.deliveryAddress?.contactPhone || ''}" style="width: 150px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; margin-left: 5px;">
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong>Tijd:</strong> 
-                            <input type="time" id="inline-timeWindowStart-${index}" value="${delivery.timeWindowStart || ''}" style="width: 100px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; margin-left: 5px;">
-                            <input type="time" id="inline-timeWindowEnd-${index}" value="${delivery.timeWindowEnd || ''}" style="width: 100px; padding: 3px; border: 1px solid #ddd; border-radius: 3px; margin-left: 5px;">
-                        </div>
-                    </div>
-                    <div style="margin-left: 10px;">
-                        <button class="btn-small btn-primary" onclick="editDelivery(${index})" style="background-color: #28a745; color: white; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; margin-right: 5px;">💾</button>
-                        <button class="btn-small btn-remove" onclick="cancelInlineEdit(${index})" style="background-color: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer;">❌</button>
-                    </div>
-                </div>
-                <div style="margin-top: 10px; text-align: center;">
-                    <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})" style="background-color: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">🔍 Gebruik deze levering</button>
-                </div>
-            `;
-        }
-        
-        function saveInlineEdit(index, card) {
-            // Get edited values
-            const editedDelivery = {
-                customerRef: document.getElementById(`inline-customerRef-${index}`).value,
-                serviceDate: document.getElementById(`inline-serviceDate-${index}`)?.value || card.querySelector('[data-field="serviceDate"]')?.textContent || '',
-                timeWindowStart: document.getElementById(`inline-timeWindowStart-${index}`).value,
-                timeWindowEnd: document.getElementById(`inline-timeWindowEnd-${index}`).value,
-                deliveryAddress: {
-                    line1: document.getElementById(`inline-deliveryAddress-${index}`).value,
-                    contactName: document.getElementById(`inline-contactName-${index}`).value,
-                    contactPhone: document.getElementById(`inline-contactPhone-${index}`).value
-                }
-            };
-            
-            // Update data
-            const testData = JSON.parse(localStorage.getItem('testData') || 'null');
-            
-            if (testData && testData.deliveries && testData.deliveries[index]) {
-                // Update test data
-                testData.deliveries[index] = { ...testData.deliveries[index], ...editedDelivery };
-                localStorage.setItem('testData', JSON.stringify(testData));
-                
-                // Update global analysis data too
-                window.lastTextAnalysis = {
-                    deliveries: testData.deliveries,
-                    deliveryCount: testData.deliveries.length,
-                    confidence: 100,
-                    aiPowered: false,
-                    testData: true
-                };
-                
-                // Refresh test data display
-                displaySavedTestData(testData);
-            } else if (window.lastTextAnalysis && window.lastTextAnalysis.deliveries) {
-                // Update analysis data
-                window.lastTextAnalysis.deliveries[index] = { ...window.lastTextAnalysis.deliveries[index], ...editedDelivery };
-                saveToLocalStorage('lastTextAnalysis', window.lastTextAnalysis);
-                
-                // Refresh the display
-                showTextAnalysisResult(window.lastTextAnalysis);
-            }
-            
-            showNotification('✅ Levering succesvol bijgewerkt!', 'success');
-        }
-        
-        function cancelInlineEdit(index) {
-            // Just refresh the display without saving
-            const testData = JSON.parse(localStorage.getItem('testData') || 'null');
-            
-            if (testData && testData.deliveries) {
-                // Refresh test data display
-                displaySavedTestData(testData);
-            } else if (window.lastTextAnalysis) {
-                showTextAnalysisResult(window.lastTextAnalysis);
-            }
-        }
-        
-        function saveDeliveryEdit(index) {
-            console.log('saveDeliveryEdit called with index:', index);
-            
-            // Check for test data first
-            const testData = JSON.parse(localStorage.getItem('testData') || 'null');
-            let isTestData = false;
-            
-            if (testData && testData.deliveries && testData.deliveries[index]) {
-                isTestData = true;
-                console.log('Updating test data delivery');
-            } else if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) {
-                showNotification('Geen analyse data beschikbaar', 'error');
-                return;
-            }
-            
-            // Get edited values
-            const editedDelivery = {
-                customerRef: document.getElementById(`edit-customerRef-${index}`).value,
-                serviceDate: document.getElementById(`edit-serviceDate-${index}`).value,
-                timeWindowStart: document.getElementById(`edit-timeWindowStart-${index}`).value,
-                timeWindowEnd: document.getElementById(`edit-timeWindowEnd-${index}`).value,
-                deliveryAddress: {
-                    line1: document.getElementById(`edit-deliveryAddress-${index}`).value,
-                    contactName: document.getElementById(`edit-contactName-${index}`).value,
-                    contactPhone: document.getElementById(`edit-contactPhone-${index}`).value
-                },
-                items: document.getElementById(`edit-items-${index}`).value.split(',').map(item => item.trim()).filter(item => item)
-            };
-            
-            if (isTestData) {
-                // Update test data
-                testData.deliveries[index] = { ...testData.deliveries[index], ...editedDelivery };
-                localStorage.setItem('testData', JSON.stringify(testData));
-                
-                // Update global analysis data too
-                window.lastTextAnalysis = {
-                    deliveries: testData.deliveries,
-                    deliveryCount: testData.deliveries.length,
-                    confidence: 100,
-                    aiPowered: false,
-                    testData: true
-                };
-                
-                // Refresh test data display
-                displaySavedTestData(testData);
-            } else {
-                // Update analysis data
-                window.lastTextAnalysis.deliveries[index] = { ...window.lastTextAnalysis.deliveries[index], ...editedDelivery };
-                saveToLocalStorage('lastTextAnalysis', window.lastTextAnalysis);
-                
-                // Refresh the display
-                showTextAnalysisResult(window.lastTextAnalysis);
-            }
-            
-            showNotification('✅ Levering succesvol bijgewerkt!', 'success');
-        }
-        
-        function cancelDeliveryEdit(index) {
-            // Just refresh the display without saving
-            const testData = JSON.parse(localStorage.getItem('testData') || 'null');
-            
-            if (testData && testData.deliveries) {
-                // Refresh test data display
-                displaySavedTestData(testData);
-            } else if (window.lastTextAnalysis) {
-                showTextAnalysisResult(window.lastTextAnalysis);
-            }
-        }
-        
-        function processAllDeliveries() {
-            if (!window.lastTextAnalysis || !window.lastTextAnalysis.deliveries) return;
-            
-            const deliveries = window.lastTextAnalysis.deliveries;
-            if (deliveries.length === 0) return;
-            
-            // Check if sender is selected
-            const sender = getSelectedSender();
-            if (!sender) {
-                showNotification('⚠️ Selecteer eerst een klant/verzender voordat je de leveringen verwerkt!', 'warning');
-                return;
-            }
-            
-            if (confirm(`Wil je alle ${deliveries.length} leveringen verwerken voor ${sender.name}? Dit zal ${deliveries.length} API calls maken.`)) {
-                processMultipleDeliveries(deliveries, sender);
-            }
-        }
-        
-        async function processMultipleDeliveries(deliveries, sender) {
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = '<div class="result">🚀 Verwerken leveringen naar Urbantz...</div>';
-            
-            const results = [];
-            const isTestMode = document.getElementById('testMode').checked;
-            const apiKey = document.getElementById('apiKey').value;
-            
-            for (let i = 0; i < deliveries.length; i++) {
-                const delivery = deliveries[i];
-                
-                // Add sender information to delivery
-                const deliveryWithSender = {
-                    ...delivery,
-                    sender: {
-                        name: sender.name,
-                        email: sender.email
+                    // Insert the cleaned HTML at cursor position
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        range.deleteContents();
+                        
+                        // Create a fragment with all the cleaned content
+                        const fragment = document.createDocumentFragment();
+                        
+                        // Add all body children (preserving both text and tables)
+                        Array.from(doc.body.childNodes).forEach(node => {
+                            fragment.appendChild(node.cloneNode(true));
+                        });
+                        
+                        range.insertNode(fragment);
                     }
-                };
+                } else if (htmlData) {
+                    // HTML content without tables - still clean it up
+                    e.preventDefault();
+                    
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlData, 'text/html');
+                    
+                    // Clean attributes
+                    const allElements = doc.body.querySelectorAll('*');
+                    allElements.forEach(el => {
+                        el.removeAttribute('style');
+                        el.removeAttribute('class');
+                        el.removeAttribute('id');
+                    });
+                    
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        range.deleteContents();
+                        
+                        const fragment = document.createDocumentFragment();
+                        Array.from(doc.body.childNodes).forEach(node => {
+                            fragment.appendChild(node.cloneNode(true));
+                        });
+                        
+                        range.insertNode(fragment);
+                    }
+                }
+                // If no HTML, let default paste behavior handle plain text
+            }
+
+            async processFiles(files) {
+                for (const file of files) {
+                    if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+                        await this.scanFile(file);
+                    }
+                }
+            }
+
+            async scanFile(file) {
+                const formData = new FormData();
+                formData.append('file', file);
                 
                 try {
-                    const response = await fetch('/api/urbantz', {
+                    const response = await fetch('http://localhost:3001/api/analyze-document', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-API-Key': apiKey
-                        },
-                        body: JSON.stringify(deliveryWithSender)
+                        body: formData
                     });
                     
                     const result = await response.json();
-                    results.push({
-                        index: i + 1,
-                        delivery: delivery,
-                        result: result,
-                        success: response.ok
-                    });
-                    
-                    // Update progress
-                    resultDiv.innerHTML = `
-                        <div class="result">
-                            🚀 Verwerken leveringen... (${i + 1}/${deliveries.length})
-                            <br><small>Laatste: ${delivery.customerRef} - ${delivery.deliveryAddress?.line1}</small>
-                            <br><small>Verzender: ${sender.name}</small>
-                            <br><small>Status: ${result.success ? '✅ Success' : '❌ Failed'}</small>
-                        </div>
-                    `;
-                    
+                    if (result.success && result.deliveries) {
+                        this.addDeliveries(result.deliveries);
+                    }
                 } catch (error) {
-                    results.push({
-                        index: i + 1,
-                        delivery: delivery,
-                        result: { error: error.message },
-                        success: false
+                    console.error('File scan error:', error);
+                }
+            }
+
+            async scanWithAI() {
+                const textInputElement = document.getElementById('textInput');
+                const text = textInputElement.innerText.trim();
+                const htmlContent = textInputElement.innerHTML.trim();
+                
+                if (!text) {
+                    alert('Voer eerst tekst in om te scannen');
+                    return;
+                }
+
+                const button = document.getElementById('scanWithAI');
+                const spinner = document.getElementById('aiSpinner');
+                
+                button.classList.add('loading');
+                spinner.classList.remove('hidden');
+
+                try {
+                    // Send both text and HTML content for better parsing
+                    const response = await fetch('http://localhost:3001/api/smart-analyze', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            text, 
+                            htmlContent,
+                            fileType: 'text' 
+                        })
                     });
+                    
+                    const result = await response.json();
+                    if (result.success && result.deliveries) {
+                        this.addDeliveries(result.deliveries);
+                        textInputElement.innerHTML = '';
+                    }
+                } catch (error) {
+                    console.error('AI scan error:', error);
+                } finally {
+                    button.classList.remove('loading');
+                    spinner.classList.add('hidden');
                 }
             }
-            
-            // Show final results
-            const successCount = results.filter(r => r.success).length;
-            const failCount = results.length - successCount;
-            
-            resultDiv.innerHTML = `
-                <div class="result">
-                    <h3>📊 Verwerk Resultaten</h3>
-                    <p><strong>Verzender:</strong> ${sender.name} (${sender.email})</p>
-                    <p><strong>✅ Succesvol: ${successCount}/${deliveries.length}</strong></p>
-                    <p><strong>❌ Gefaald: ${failCount}/${deliveries.length}</strong></p>
-                    
-                    <div style="margin-top: 15px;">
-                        <h4>📋 Details:</h4>
-                        ${results.map(r => `
-                            <div style="border: 1px solid ${r.success ? '#28a745' : '#dc3545'}; padding: 10px; margin: 5px 0; border-radius: 5px;">
-                                <strong>Levering ${r.index}:</strong> ${r.delivery.customerRef}<br>
-                                <strong>Adres:</strong> ${r.delivery.deliveryAddress?.line1}<br>
-                                <strong>Status:</strong> ${r.success ? '✅ Success' : '❌ Failed'}<br>
-                                ${r.success ? `<strong>Task ID:</strong> ${r.result.taskId}` : `<strong>Error:</strong> ${r.result.error}`}
-                            </div>
-                        `).join('')}
-                    </div>
-                    
-                    <div style="margin-top: 15px;">
-                        <h4>🔍 Export Code (voor controle):</h4>
-                        <div style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto;">
-                            <pre>${JSON.stringify({
-                                exportInfo: {
-                                    timestamp: new Date().toISOString(),
-                                    sender: sender,
-                                    totalDeliveries: deliveries.length,
-                                    successCount: successCount,
-                                    failCount: failCount
-                                },
-                                deliveries: deliveries.map((delivery, index) => ({
-                                    index: index + 1,
-                                    customerRef: delivery.customerRef,
-                                    address: delivery.deliveryAddress?.line1,
-                                    contactName: delivery.deliveryAddress?.contactName,
-                                    contactPhone: delivery.deliveryAddress?.contactPhone,
-                                    serviceDate: delivery.serviceDate,
-                                    timeWindow: `${delivery.timeWindowStart} - ${delivery.timeWindowEnd}`,
-                                    items: delivery.items,
-                                    notes: delivery.notes,
-                                    priority: delivery.priority,
-                                    status: results[index]?.success ? 'SUCCESS' : 'FAILED',
-                                    taskId: results[index]?.success ? results[index].result.taskId : null,
-                                    error: results[index]?.success ? null : results[index].result.error
-                                }))
-                            }, null, 2)}</pre>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 15px;">
-                        <button class="btn-small btn-analyze" onclick="clearResults()">🗑️ Wissen</button>
-                        <button class="btn-small btn-analyze" onclick="copyExportCode()">📋 Kopieer Export Code</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function clearResults() {
-            document.getElementById('result').innerHTML = '';
-        }
-        
-        function copyExportCode() {
-            const resultDiv = document.getElementById('result');
-            const preElement = resultDiv.querySelector('pre');
-            if (preElement) {
-                const exportCode = preElement.textContent;
-                navigator.clipboard.writeText(exportCode).then(() => {
-                    showNotification('✅ Export code gekopieerd naar clipboard!', 'success');
-                }).catch(err => {
-                    console.error('Failed to copy: ', err);
-                    showNotification('❌ Kon export code niet kopiëren. Probeer handmatig te selecteren en kopiëren.', 'error');
+
+            generateRandomData() {
+                const randomDeliveries = this.getRandomDeliveries(10);
+                this.addDeliveries(randomDeliveries);
+            }
+
+            getRandomDeliveries(count) {
+                const deliveryDatabase = this.getDeliveryDatabase();
+                const selected = [];
+                const used = new Set();
+                
+                while (selected.length < count && selected.length < deliveryDatabase.length) {
+                    const randomIndex = Math.floor(Math.random() * deliveryDatabase.length);
+                    if (!used.has(randomIndex)) {
+                        used.add(randomIndex);
+                        selected.push(deliveryDatabase[randomIndex]);
+                    }
+                }
+                
+                return selected;
+            }
+
+            getDeliveryDatabase() {
+                return [
+                    { deliveryId: 'DEMO-001', address: 'Koningstraat 15, 1000 Brussel', contactName: 'Jan Janssen', contactPhone: '+32 2 123 4567', timeWindow: '09:00 - 12:00', customerRef: 'CUST-001' },
+                    { deliveryId: 'DEMO-002', address: 'Grote Markt 8, 2000 Antwerpen', contactName: 'Maria Verstraeten', contactPhone: '+32 3 234 5678', timeWindow: '13:00 - 16:00', customerRef: 'CUST-002' },
+                    { deliveryId: 'DEMO-003', address: 'Vrijdagmarkt 22, Gent', contactName: 'Tom Peeters', contactPhone: '+32 9 345 6789', timeWindow: '10:00 - 13:00', customerRef: 'CUST-003' },
+                    { deliveryId: 'DEMO-004', address: 'Stationsplein 45, Leuven', contactName: 'Lisa Van Der Berg', contactPhone: '+32 16 456 7890', timeWindow: '14:00 - 17:00', customerRef: 'CUST-004' },
+                    { deliveryId: 'DEMO-005', address: 'Kerkplein 12, Hasselt', contactName: 'Pieter Janssen', contactPhone: '+32 11 567 8901', timeWindow: '11:00 - 14:00', customerRef: 'CUST-005' },
+                    { deliveryId: 'DEMO-006', address: 'Marktstraat 67, Brugge', contactName: 'Sarah De Vries', contactPhone: '+32 50 678 9012', timeWindow: '15:00 - 18:00', customerRef: 'CUST-006' },
+                    { deliveryId: 'DEMO-007', address: 'Hoofdstraat 123, Amsterdam', contactName: 'Jan de Vries', contactPhone: '+31 20 123 4567', timeWindow: '09:00 - 12:00', customerRef: 'CUST-007' },
+                    { deliveryId: 'DEMO-008', address: 'Kerkstraat 456, Rotterdam', contactName: 'Marie Janssen', contactPhone: '+31 10 987 6543', timeWindow: '13:00 - 16:00', customerRef: 'CUST-008' },
+                    { deliveryId: 'DEMO-009', address: 'Lange Laan 789, Utrecht', contactName: 'Tom Bakker', contactPhone: '+31 30 456 7890', timeWindow: '10:00 - 13:00', customerRef: 'CUST-009' },
+                    { deliveryId: 'DEMO-010', address: 'Marktplein 12, Den Haag', contactName: 'Lisa van Dijk', contactPhone: '+31 70 234 5678', timeWindow: '14:00 - 17:00', customerRef: 'CUST-010' },
+                    { deliveryId: 'DEMO-011', address: 'Stationsweg 34, Eindhoven', contactName: 'Pieter Smit', contactPhone: '+31 40 345 6789', timeWindow: '11:00 - 14:00', customerRef: 'CUST-011' },
+                    { deliveryId: 'DEMO-012', address: 'Grote Markt 56, Groningen', contactName: 'Sarah de Jong', contactPhone: '+31 50 678 9012', timeWindow: '15:00 - 18:00', customerRef: 'CUST-012' },
+                    { deliveryId: 'DEMO-013', address: 'Plein 98, Voeren', contactName: 'Marie Peeters', contactPhone: '+32 4 987 6543', timeWindow: '13:00 - 16:00', customerRef: 'CUST-013' },
+                    { deliveryId: 'DEMO-014', address: 'Grote Markt 81, Neerpelt', contactName: 'Tom Verbeke', contactPhone: '+32 11 456 789', timeWindow: '10:00 - 13:00', customerRef: 'CUST-014' },
+                    { deliveryId: 'DEMO-015', address: 'Stationsstraat 45, Leuven', contactName: 'Lisa Van Der Berg', contactPhone: '+32 16 234 567', timeWindow: '14:00 - 17:00', customerRef: 'CUST-015' },
+                    { deliveryId: 'DEMO-016', address: 'Kerkplein 12, Hasselt', contactName: 'Pieter Janssen', contactPhone: '+32 11 345 678', timeWindow: '11:00 - 14:00', customerRef: 'CUST-016' },
+                    { deliveryId: 'DEMO-017', address: 'Marktstraat 67, Brugge', contactName: 'Sarah De Vries', contactPhone: '+32 50 123 456', timeWindow: '15:00 - 18:00', customerRef: 'CUST-017' },
+                    { deliveryId: 'DEMO-018', address: 'Hoofdstraat 123, Amsterdam', contactName: 'Jan de Vries', contactPhone: '+31 20 123 4567', timeWindow: '09:00 - 12:00', customerRef: 'CUST-018' },
+                    { deliveryId: 'DEMO-019', address: 'Kerkstraat 456, Rotterdam', contactName: 'Marie Janssen', contactPhone: '+31 10 987 6543', timeWindow: '13:00 - 16:00', customerRef: 'CUST-019' },
+                    { deliveryId: 'DEMO-020', address: 'Lange Laan 789, Utrecht', contactName: 'Tom Bakker', contactPhone: '+31 30 456 7890', timeWindow: '10:00 - 13:00', customerRef: 'CUST-020' }
+                ];
+            }
+
+            addDeliveries(newDeliveries) {
+                newDeliveries.forEach(delivery => {
+                    const id = `delivery-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    this.deliveries.push({
+                        id,
+                        ...delivery,
+                        serviceDate: delivery.serviceDate || new Date().toISOString().split('T')[0],
+                        timeWindowStart: delivery.timeWindowStart || delivery.timeWindow?.split(' - ')[0] || '09:00',
+                        timeWindowEnd: delivery.timeWindowEnd || delivery.timeWindow?.split(' - ')[1] || '17:00',
+                        notes: delivery.notes || ''
+                    });
                 });
+                
+                this.saveToStorage();
+                this.updateUI();
             }
-        }
-        
-        // Data persistence functions
-        function saveToLocalStorage(key, data) {
-            try {
-                localStorage.setItem(key, JSON.stringify(data));
-            } catch (e) {
-                console.warn('Could not save to localStorage:', e);
+
+            updateUI() {
+                this.renderDeliveries();
+                this.updateExportStats();
             }
-        }
-        
-        function loadFromLocalStorage(key) {
-            try {
-                const data = localStorage.getItem(key);
-                return data ? JSON.parse(data) : null;
-            } catch (e) {
-                console.warn('Could not load from localStorage:', e);
-                return null;
-            }
-        }
-        
-        function clearLocalStorage() {
-            try {
-                localStorage.removeItem('lastTextAnalysis');
-                localStorage.removeItem('selectedSender');
-                localStorage.removeItem('testData');
-                localStorage.removeItem('scrollPosition');
-            } catch (e) {
-                console.warn('Could not clear localStorage:', e);
-            }
-        }
-        
-        // Load data on page load
-        function loadSavedData() {
-            const savedAnalysis = loadFromLocalStorage('lastTextAnalysis');
-            const savedSender = loadFromLocalStorage('selectedSender');
-            const savedTestData = loadFromLocalStorage('testData');
-            
-            if (savedAnalysis) {
-                window.lastTextAnalysis = savedAnalysis;
-                displaySavedAnalysis(savedAnalysis);
-            }
-            
-            if (savedSender) {
-                document.getElementById('senderSelect').value = savedSender.value;
-                if (savedSender.custom) {
-                    document.getElementById('customSenderName').value = savedSender.name;
-                    document.getElementById('customSenderEmail').value = savedSender.email;
+
+            renderDeliveries() {
+                const grid = document.getElementById('dataGrid');
+                
+                if (this.deliveries.length === 0) {
+                    grid.innerHTML = '<div class="no-data"><p>Nog geen leveringen geïmporteerd. Upload documenten of genereer test data.</p></div>';
+                    return;
                 }
-                updateSenderInfo();
-            }
-            
-            if (savedTestData) {
-                displaySavedTestData(savedTestData);
-            }
-        }
-        
-        function displaySavedAnalysis(analysis) {
-            const resultDiv = document.getElementById('textAnalysisResult');
-            if (analysis.deliveries && analysis.deliveries.length > 0) {
-                resultDiv.innerHTML = `
-                    <div class="result">
-                        <h3>📧 AI Analyse Resultaten (Hersteld)</h3>
-                        <p><strong>✅ ${analysis.deliveryCount} leveringen gevonden</strong></p>
-                        <p><strong>🤖 AI Powered:</strong> ${analysis.aiPowered ? 'Ja' : 'Nee'}</p>
-                        <p><strong>📊 Confidence:</strong> ${analysis.confidence}%</p>
-                        <p><strong>💾 Status:</strong> Data hersteld uit localStorage</p>
-                        
-                        <div style="margin-top: 15px;">
-                            <h4>📋 Leveringen:</h4>
-                            ${analysis.deliveries.map((delivery, index) => `
-                                <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
-                                    <strong>Levering ${index + 1}:</strong> ${delivery.customerRef}<br>
-                                    <strong>Adres:</strong> ${delivery.deliveryAddress?.line1}<br>
-                                    <strong>Datum:</strong> ${delivery.serviceDate}<br>
-                                    <strong>Tijd:</strong> ${delivery.timeWindowStart} - ${delivery.timeWindowEnd}
-                                    <div style="margin-top: 10px;">
-                                        <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})">🔍 Gebruik deze levering</button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        
-                        <div style="margin-top: 15px;">
-                            <button class="btn-small btn-analyze" onclick="processAllDeliveries()">🚀 Verwerk alle leveringen</button>
-                            <button class="btn-small btn-remove" onclick="clearTextAnalysis()">🗑️ Wissen</button>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-        
-        function displaySavedTestData(testData) {
-            const resultDiv = document.getElementById('testDataResult');
-            resultDiv.innerHTML = `
-                <div class="result">
-                    <h3>🧪 Test Data (Hersteld)</h3>
-                    <p><strong>✅ ${testData.deliveries.length} test leveringen beschikbaar</strong></p>
-                    <p><strong>📅 Datum:</strong> 15 oktober 2025</p>
-                    <p><strong>🚚 Type:</strong> Fiets leveringen</p>
-                    <p><strong>💾 Status:</strong> Data hersteld uit localStorage</p>
-                    
-                    <div style="margin-top: 15px;">
-                        <h4>📋 Leveringen:</h4>
-                        ${testData.deliveries.map((delivery, index) => `
-                            <div data-delivery-index="${index}" style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                    <div style="flex: 1;">
-                                        <strong>Levering ${index + 1}:</strong> ${delivery.customerRef}<br>
-                                        <strong>Adres:</strong> ${delivery.deliveryAddress.line1}<br>
-                                        <strong>Contact:</strong> ${delivery.deliveryAddress.contactName} (${delivery.deliveryAddress.contactPhone})<br>
-                                        <strong>Tijd:</strong> ${delivery.timeWindowStart} - ${delivery.timeWindowEnd}
-                                    </div>
-                                    <div style="margin-left: 10px;">
-                                        <button class="btn-small btn-edit" onclick="editDelivery(${index})" title="Bewerk deze levering">✏️</button>
-                                    </div>
-                                </div>
-                                <div style="margin-top: 10px; text-align: center;">
-                                    <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})" style="background-color: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">🔍 Gebruik deze levering</button>
-                                </div>
+
+                const deliveriesHTML = this.deliveries.map(delivery => `
+                    <div class="delivery-card ${this.selectedDeliveries.has(delivery.id) ? 'selected' : ''}" data-id="${delivery.id}">
+                        <button class="edit-btn" onclick="app.editDelivery('${delivery.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <div class="delivery-header">Levering: ${delivery.customerRef || delivery.deliveryId || 'N/A'}</div>
+                        <div class="delivery-info"><strong>Adres:</strong> ${delivery.deliveryAddress?.line1 || delivery.address || 'N/A'}</div>
+                        <div class="delivery-info"><strong>Contact:</strong> ${delivery.deliveryAddress?.contactName || delivery.contactName || 'N/A'} (${delivery.deliveryAddress?.contactPhone || delivery.contactPhone || 'N/A'})</div>
+                        <div class="delivery-info"><strong>Tijd:</strong> ${delivery.timeWindowStart || '09:00'} - ${delivery.timeWindowEnd || '17:00'}</div>
+                        <div class="delivery-info"><strong>Datum:</strong> ${delivery.serviceDate ? new Date(delivery.serviceDate).toLocaleDateString('nl-NL') : 'N/A'}</div>
+                        <div class="delivery-actions">
+                            <button class="select-btn ${this.selectedDeliveries.has(delivery.id) ? 'selected' : 'unselected'}" 
+                                    onclick="app.toggleSelection('${delivery.id}')">
+                                ${this.selectedDeliveries.has(delivery.id) ? 'Geselecteerd' : 'Gebruik deze levering'}
+                            </button>
                             </div>
-                        `).join('')}
-                    </div>
-                    
-                    <div style="margin-top: 15px;">
-                        <button class="btn-small btn-analyze" onclick="processAllDeliveries()">🚀 Verwerk alle test leveringen</button>
-                        <button class="btn-small btn-remove" onclick="clearTestData()">🗑️ Wissen</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Test data generation
-        function generateTestDeliveries() {
-            const testDeliveries = [
-                {
-                    taskId: 'TEST-001',
-                    customerRef: 'DEMO-001',
-                    deliveryAddress: {
-                        line1: 'Koningstraat 15, 1000 Brussel',
-                        contactName: 'Jan Janssen',
-                        contactPhone: '+32 2 123 4567'
-                    },
-                    serviceDate: '2025-10-15',
-                    timeWindowStart: '09:00',
-                    timeWindowEnd: '12:00',
-                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
-                    notes: 'Test levering - Demo data',
-                    priority: 'normal'
-                },
-                {
-                    taskId: 'TEST-002',
-                    customerRef: 'DEMO-002',
-                    deliveryAddress: {
-                        line1: 'Grote Markt 8, 2000 Antwerpen',
-                        contactName: 'Maria Verstraeten',
-                        contactPhone: '+32 3 234 5678'
-                    },
-                    serviceDate: '2025-10-15',
-                    timeWindowStart: '13:00',
-                    timeWindowEnd: '16:00',
-                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
-                    notes: 'Test levering - Demo data',
-                    priority: 'normal'
-                },
-                {
-                    taskId: 'TEST-003',
-                    customerRef: 'DEMO-003',
-                    deliveryAddress: {
-                        line1: 'Vrijdagmarkt 22, 9000 Gent',
-                        contactName: 'Piet De Vries',
-                        contactPhone: '+32 9 345 6789'
-                    },
-                    serviceDate: '2025-10-15',
-                    timeWindowStart: '10:00',
-                    timeWindowEnd: '12:00',
-                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
-                    notes: 'Test levering - Demo data',
-                    priority: 'normal'
-                },
-                {
-                    taskId: 'TEST-004',
-                    customerRef: 'DEMO-004',
-                    deliveryAddress: {
-                        line1: 'Bondgenotenlaan 45, 3000 Leuven',
-                        contactName: 'Anna Smets',
-                        contactPhone: '+32 16 456 7890'
-                    },
-                    serviceDate: '2025-10-15',
-                    timeWindowStart: '14:00',
-                    timeWindowEnd: '17:00',
-                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
-                    notes: 'Test levering - Demo data',
-                    priority: 'normal'
-                },
-                {
-                    taskId: 'TEST-005',
-                    customerRef: 'DEMO-005',
-                    deliveryAddress: {
-                        line1: 'Bruul 12, 2800 Mechelen',
-                        contactName: 'Tom Van Damme',
-                        contactPhone: '+32 15 567 8901'
-                    },
-                    serviceDate: '2025-10-15',
-                    timeWindowStart: '08:00',
-                    timeWindowEnd: '10:00',
-                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
-                    notes: 'Test levering - Demo data',
-                    priority: 'normal'
-                },
-                {
-                    taskId: 'TEST-006',
-                    customerRef: 'DEMO-006',
-                    deliveryAddress: {
-                        line1: 'Steenstraat 33, 8000 Brugge',
-                        contactName: 'Lisa Peeters',
-                        contactPhone: '+32 50 678 9012'
-                    },
-                    serviceDate: '2025-10-15',
-                    timeWindowStart: '11:00',
-                    timeWindowEnd: '13:00',
-                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
-                    notes: 'Test levering - Demo data',
-                    priority: 'normal'
-                },
-                {
-                    taskId: 'TEST-007',
-                    customerRef: 'DEMO-007',
-                    deliveryAddress: {
-                        line1: 'Koning Albertstraat 78, 3500 Hasselt',
-                        contactName: 'Mark Janssen',
-                        contactPhone: '+32 11 789 0123'
-                    },
-                    serviceDate: '2025-10-15',
-                    timeWindowStart: '15:00',
-                    timeWindowEnd: '18:00',
-                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
-                    notes: 'Test levering - Demo data',
-                    priority: 'normal'
-                },
-                {
-                    taskId: 'TEST-008',
-                    customerRef: 'DEMO-008',
-                    deliveryAddress: {
-                        line1: 'Doorniksestraat 55, 8500 Kortrijk',
-                        contactName: 'Sofie De Clercq',
-                        contactPhone: '+32 56 890 1234'
-                    },
-                    serviceDate: '2025-10-15',
-                    timeWindowStart: '09:30',
-                    timeWindowEnd: '11:30',
-                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
-                    notes: 'Test levering - Demo data',
-                    priority: 'normal'
-                },
-                {
-                    taskId: 'TEST-009',
-                    customerRef: 'DEMO-009',
-                    deliveryAddress: {
-                        line1: 'Rue de Fer 88, 5000 Namen',
-                        contactName: 'Pierre Dubois',
-                        contactPhone: '+32 81 901 2345'
-                    },
-                    serviceDate: '2025-10-15',
-                    timeWindowStart: '12:30',
-                    timeWindowEnd: '14:30',
-                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
-                    notes: 'Test levering - Demo data',
-                    priority: 'normal'
-                },
-                {
-                    taskId: 'TEST-010',
-                    customerRef: 'DEMO-010',
-                    deliveryAddress: {
-                        line1: 'Rue du Pont 99, 4000 Luik',
-                        contactName: 'Marie Leblanc',
-                        contactPhone: '+32 4 012 3456'
-                    },
-                    serviceDate: '2025-10-15',
-                    timeWindowStart: '16:00',
-                    timeWindowEnd: '19:00',
-                    items: [{ description: 'Fiets levering', quantity: 1, tempClass: 'ambient' }],
-                    notes: 'Test levering - Demo data',
-                    priority: 'normal'
+                        </div>
+                `).join('');
+
+                grid.innerHTML = deliveriesHTML;
+            }
+
+            toggleSelection(deliveryId) {
+                if (this.selectedDeliveries.has(deliveryId)) {
+                    this.selectedDeliveries.delete(deliveryId);
+                } else {
+                    this.selectedDeliveries.add(deliveryId);
                 }
-            ];
-            
-            // Store test data globally
-            window.lastTextAnalysis = {
-                deliveries: testDeliveries,
-                deliveryCount: testDeliveries.length,
-                confidence: 100,
-                aiPowered: false,
-                testData: true
-            };
-            
-            // Save to localStorage
-            saveToLocalStorage('lastTextAnalysis', window.lastTextAnalysis);
-            saveToLocalStorage('testData', { deliveries: testDeliveries, timestamp: new Date().toISOString() });
-            
-            // Display test data
-            const resultDiv = document.getElementById('testDataResult');
-            resultDiv.innerHTML = `
-                <div class="result">
-                    <h3>🧪 Test Data Gegenereerd</h3>
-                    <p><strong>✅ ${testDeliveries.length} test leveringen aangemaakt</strong></p>
-                    <p><strong>📅 Datum:</strong> 15 oktober 2025</p>
-                    <p><strong>🚚 Type:</strong> Fiets leveringen</p>
-                    <p><strong>📍 Locaties:</strong> Brussel, Antwerpen, Gent, Leuven, Mechelen, Brugge, Hasselt, Kortrijk, Namen, Luik</p>
+                this.updateUI();
+            }
+
+            selectAll() {
+                this.deliveries.forEach(delivery => this.selectedDeliveries.add(delivery.id));
+                this.updateUI();
+            }
+
+            deselectAll() {
+                this.selectedDeliveries.clear();
+                this.updateUI();
+            }
+
+            editDelivery(deliveryId) {
+                const delivery = this.deliveries.find(d => d.id === deliveryId);
+                if (!delivery) return;
+
+                this.currentEditId = deliveryId;
+                
+                // Fill form
+                document.getElementById('editCustomerRef').value = delivery.customerRef || delivery.deliveryId || '';
+                document.getElementById('editAddress').value = delivery.deliveryAddress?.line1 || delivery.address || '';
+                document.getElementById('editContactName').value = delivery.deliveryAddress?.contactName || delivery.contactName || '';
+                document.getElementById('editContactPhone').value = delivery.deliveryAddress?.contactPhone || delivery.contactPhone || '';
+                document.getElementById('editTimeStart').value = delivery.timeWindowStart || '09:00';
+                document.getElementById('editTimeEnd').value = delivery.timeWindowEnd || '17:00';
+                document.getElementById('editServiceDate').value = delivery.serviceDate || '';
+                document.getElementById('editNotes').value = delivery.notes || '';
+
+                // Show modal
+                document.getElementById('editModal').classList.add('show');
+            }
+
+            saveEdit(e) {
+                e.preventDefault();
+                
+                const delivery = this.deliveries.find(d => d.id === this.currentEditId);
+                if (!delivery) return;
+
+                // Update delivery
+                delivery.customerRef = document.getElementById('editCustomerRef').value;
+                delivery.deliveryAddress = {
+                    ...delivery.deliveryAddress,
+                    line1: document.getElementById('editAddress').value,
+                    contactName: document.getElementById('editContactName').value,
+                    contactPhone: document.getElementById('editContactPhone').value
+                };
+                delivery.timeWindowStart = document.getElementById('editTimeStart').value;
+                delivery.timeWindowEnd = document.getElementById('editTimeEnd').value;
+                delivery.serviceDate = document.getElementById('editServiceDate').value;
+                delivery.notes = document.getElementById('editNotes').value;
+
+                this.saveToStorage();
+                this.updateUI();
+                this.closeEditModal();
+            }
+
+            closeEditModal() {
+                document.getElementById('editModal').classList.remove('show');
+                this.currentEditId = null;
+            }
+
+            updateExportStats() {
+                const totalCount = this.deliveries.length;
+                const selectedCount = this.selectedDeliveries.size;
+                const readyCount = this.deliveries.filter(d => d.customerRef && d.deliveryAddress?.line1).length;
+
+                document.getElementById('totalCount').textContent = totalCount;
+                document.getElementById('selectedCount').textContent = selectedCount;
+                document.getElementById('readyCount').textContent = readyCount;
+
+                const statsDiv = document.getElementById('exportStats');
+                if (totalCount > 0) {
+                    statsDiv.style.display = 'block';
+                } else {
+                    statsDiv.style.display = 'none';
+                }
+            }
+
+            async exportDeliveries(selectedOnly = false) {
+                const deliveriesToExport = selectedOnly 
+                    ? this.deliveries.filter(d => this.selectedDeliveries.has(d.id))
+                    : this.deliveries;
+
+                if (deliveriesToExport.length === 0) {
+                    alert('Geen leveringen om te exporteren');
+                    return;
+                }
+
+                // Convert to Urbantz format
+                const urbantzPayload = deliveriesToExport.map(delivery => ({
+                    customerRef: delivery.customerRef || delivery.deliveryId,
+                    deliveryAddress: {
+                        line1: delivery.deliveryAddress?.line1 || delivery.address,
+                        contactName: delivery.deliveryAddress?.contactName || delivery.contactName,
+                        contactPhone: delivery.deliveryAddress?.contactPhone || delivery.contactPhone
+                    },
+                    serviceDate: delivery.serviceDate,
+                    timeWindowStart: delivery.timeWindowStart,
+                    timeWindowEnd: delivery.timeWindowEnd,
+                    items: delivery.items || [{ description: 'Pakket', quantity: 1, tempClass: 'ambient' }],
+                    notes: delivery.notes
+                }));
+
+                // Show payload preview
+                this.showPayloadPreview(urbantzPayload);
+
+                // Export to Urbantz API
+                try {
+                    console.log('Exporting to Urbantz:', urbantzPayload);
                     
-                    <div style="margin-top: 15px;">
-                        <h4>📋 Leveringen:</h4>
-                        ${testDeliveries.map((delivery, index) => `
-                            <div data-delivery-index="${index}" style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; background: #f9f9f9;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                    <div style="flex: 1;">
-                                        <strong>Levering ${index + 1}:</strong> ${delivery.customerRef}<br>
-                                        <strong>Adres:</strong> ${delivery.deliveryAddress.line1}<br>
-                                        <strong>Contact:</strong> ${delivery.deliveryAddress.contactName} (${delivery.deliveryAddress.contactPhone})<br>
-                                        <strong>Tijd:</strong> ${delivery.timeWindowStart} - ${delivery.timeWindowEnd}
-                                    </div>
-                                    <div style="margin-left: 10px;">
-                                        <button class="btn-small btn-edit" onclick="editDelivery(${index})" title="Bewerk deze levering">✏️</button>
-                                    </div>
-                                </div>
-                                <div style="margin-top: 10px; text-align: center;">
-                                    <button class="btn-small btn-analyze" onclick="useSpecificDelivery(${index})" style="background-color: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">🔍 Gebruik deze levering</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
+                    const response = await fetch('http://localhost:3001/api/urbantz-export', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(urbantzPayload)
+                    });
                     
-                    <div style="margin-top: 15px;">
-                        <button class="btn-small btn-analyze" onclick="processAllDeliveries()">🚀 Verwerk alle test leveringen</button>
-                        <button class="btn-small btn-remove" onclick="clearTestData()">🗑️ Wissen</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function clearTestData() {
-            document.getElementById('testDataResult').innerHTML = '';
-            window.lastTextAnalysis = null;
-            localStorage.removeItem('testData');
-            localStorage.removeItem('lastTextAnalysis');
-            
-            // Reset all delivery buttons
-            resetAllDeliveryButtons();
-        }
-        
-        // Notification system
-        function showNotification(message, type = 'info', duration = 3000) {
-            // Remove existing notifications
-            const existingNotifications = document.querySelectorAll('.notification');
-            existingNotifications.forEach(notification => notification.remove());
-            
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            
-            // Add to page
-            document.body.appendChild(notification);
-            
-            // Auto remove after duration
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.style.animation = 'slideOut 0.3s ease-in';
-                    setTimeout(() => {
-                        if (notification.parentNode) {
-                            notification.remove();
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        const message = `Export voltooid!\n\n✅ Succesvol: ${result.successful} leveringen\n❌ Gefaald: ${result.failed} leveringen\n\nTotaal: ${result.totalDeliveries} leveringen`;
+                        alert(message);
+                        
+                        // Clear selected deliveries after successful export
+                        this.selectedDeliveries.clear();
+                        this.updateUI();
+                        
+                        // Show detailed results in console
+                        if (result.errors.length > 0) {
+                            console.warn('Export errors:', result.errors);
                         }
-                    }, 300);
-                }
-            }, duration);
-            
-            // Click to close
-            notification.addEventListener('click', () => {
-                notification.style.animation = 'slideOut 0.3s ease-in';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.remove();
+                        if (result.results.length > 0) {
+                            console.log('Successful exports:', result.results);
+                        }
+                    } else {
+                        alert('Export gefaald: ' + (result.error || 'Onbekende fout'));
                     }
-                }, 300);
-            });
+                    
+                } catch (error) {
+                    console.error('Export error:', error);
+                    alert('Export gefaald: ' + error.message);
+                }
+            }
+
+            showPayloadPreview(payload) {
+                const preview = document.getElementById('codePreview');
+                const code = document.getElementById('payloadCode');
+                
+                code.textContent = JSON.stringify(payload, null, 2);
+                preview.style.display = 'block';
+            }
+
+            clearAll() {
+                this.showConfirmModal();
+            }
+
+            showConfirmModal() {
+                const modal = document.getElementById('confirmModal');
+                modal.classList.add('show');
+            }
+
+            closeConfirmModal() {
+                const modal = document.getElementById('confirmModal');
+                modal.classList.remove('show');
+            }
+
+            confirmClearAll() {
+                this.deliveries = [];
+                this.selectedDeliveries.clear();
+                this.saveToStorage();
+                this.updateUI();
+                document.getElementById('codePreview').style.display = 'none';
+                this.closeConfirmModal();
+            }
+
+            saveToStorage() {
+                localStorage.setItem('urbantz-deliveries', JSON.stringify(this.deliveries));
+                localStorage.setItem('urbantz-selected', JSON.stringify([...this.selectedDeliveries]));
+            }
+
+            loadFromStorage() {
+                const saved = localStorage.getItem('urbantz-deliveries');
+                if (saved) {
+                    this.deliveries = JSON.parse(saved);
+                }
+                
+                const savedSelected = localStorage.getItem('urbantz-selected');
+                if (savedSelected) {
+                    this.selectedDeliveries = new Set(JSON.parse(savedSelected));
+                }
+            }
         }
-        
-        // Load saved data on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadSavedData();
-            
-            // Restore scroll position
-            const savedScrollPosition = localStorage.getItem('scrollPosition');
-            if (savedScrollPosition) {
-                window.scrollTo(0, parseInt(savedScrollPosition));
-            }
-        });
-        
-        // Save scroll position before page unload
-        window.addEventListener('beforeunload', function() {
-            localStorage.setItem('scrollPosition', window.pageYOffset);
-        });
-        
-        // Test mode management
-        document.getElementById('testMode').addEventListener('change', function() {
-            const apiKeyInput = document.getElementById('apiKey');
-            const customerRefInput = document.getElementById('customerRef');
-            
-            if (this.checked) {
-                // Test mode enabled
-                apiKeyInput.value = 'test';
-                if (!customerRefInput.value.includes('TEST')) {
-                    customerRefInput.value = 'TEST-' + customerRefInput.value;
-                }
-                apiKeyInput.placeholder = 'Test mode - veilig';
-            } else {
-                // Production mode
-                apiKeyInput.value = '';
-                apiKeyInput.placeholder = 'Voer je echte Urbantz API key in';
-            }
-        });
-        
-        document.getElementById('urbantzForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const resultDiv = document.getElementById('result');
-            const isTestMode = document.getElementById('testMode').checked;
-            
-            if (isTestMode) {
-                resultDiv.innerHTML = '<div class="result">🧪 Testing in SAFE mode...</div>';
-            } else {
-                resultDiv.innerHTML = '<div class="result" style="border-left-color: #dc3545; background-color: #f8d7da;">⚠️ PRODUCTION MODE - This will create REAL deliveries!</div>';
-            }
-            
-            try {
-                const payload = {
-                    customerRef: document.getElementById('customerRef').value,
-                    deliveryAddress: {
-                        line1: document.getElementById('deliveryAddress').value,
-                        contactName: "Test",
-                        contactPhone: "+32 470 00 00 00"
-                    },
-                    serviceDate: document.getElementById('serviceDate').value,
-                    timeWindowStart: document.getElementById('timeWindowStart').value,
-                    timeWindowEnd: document.getElementById('timeWindowEnd').value,
-                    items: [{
-                        description: "Box",
-                        quantity: 1,
-                        tempClass: "ambient"
-                    }],
-                    notes: "Test via web interface"
-                };
-                
-                const response = await fetch('/api/urbantz', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-API-Key': document.getElementById('apiKey').value
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    resultDiv.innerHTML = `
-                        <div class="result">
-                            <h3>✅ Success!</h3>
-                            <pre>${JSON.stringify(result, null, 2)}</pre>
-                        </div>
-                    `;
-                } else {
-                    resultDiv.innerHTML = `
-                        <div class="result error">
-                            <h3>❌ Error</h3>
-                            <p>${result.error || 'Unknown error occurred'}</p>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `
-                    <div class="result error">
-                        <h3>❌ Network Error</h3>
-                        <p>${error.message}</p>
-                    </div>
-                `;
-            }
-        });
+
+        // Initialize app
+        const app = new ImportExportApp();
     </script>
 </body>
 </html>
