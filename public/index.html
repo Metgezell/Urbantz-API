@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Urbantz Import Export - AI Document Scanner</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -320,6 +321,75 @@
         .upload-formats {
             color: var(--text-muted);
             font-size: 0.9rem;
+        }
+        
+        .file-preview {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--bg-dark-hover);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            display: none;
+        }
+        
+        .file-preview.show {
+            display: block;
+        }
+        
+        .file-preview-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-dark);
+            border-radius: var(--radius);
+            margin-bottom: 0.5rem;
+        }
+        
+        .file-preview-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .file-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: var(--primary);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .file-info {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .file-size {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        
+        .file-remove {
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+        
+        .file-remove:hover {
+            background: #dc2626;
         }
         
         .text-input-section {
@@ -819,6 +889,127 @@
             padding: 3rem 1rem;
             font-style: italic;
         }
+        
+        /* AI Loading Animation Overlay */
+        .ai-loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+        }
+        
+        .ai-loading-overlay.active {
+            display: flex;
+        }
+        
+        .ai-loading-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .ai-loading-ring {
+            position: absolute;
+            border: 3px solid transparent;
+            border-radius: 50%;
+        }
+        
+        .ai-loading-ring-1 {
+            width: 250px;
+            height: 250px;
+            border-top-color: var(--primary);
+            border-right-color: var(--primary);
+        }
+        
+        .ai-loading-ring-2 {
+            width: 200px;
+            height: 200px;
+            border-bottom-color: var(--accent);
+            border-left-color: var(--accent);
+        }
+        
+        .ai-loading-ring-3 {
+            width: 150px;
+            height: 150px;
+            border-top-color: #ec4899;
+            border-right-color: #ec4899;
+        }
+        
+        .ai-loading-core {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 60px rgba(139, 92, 246, 0.8),
+                        0 0 100px rgba(6, 182, 212, 0.5);
+        }
+        
+        .ai-loading-icon {
+            font-size: 3rem;
+            color: white;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8));
+        }
+        
+        .ai-loading-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .ai-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+        
+        .ai-loading-text {
+            position: absolute;
+            bottom: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            letter-spacing: 2px;
+        }
+        
+        .ai-loading-progress {
+            position: absolute;
+            bottom: -110px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: var(--bg-dark-secondary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .ai-loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent), #ec4899);
+            border-radius: 2px;
+            width: 0;
+        }
     </style>
 </head>
 <body>
@@ -945,7 +1136,8 @@
                     <div class="upload-text">Sleep bestanden hier of klik om te uploaden</div>
                     <div class="upload-formats">PDF, Excel, Afbeeldingen</div>
                     <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.xls,.png,.jpg,.jpeg" style="display: none;">
-                    </div>
+                    <div class="file-preview" id="filePreview"></div>
+                </div>
 
                 <!-- Text Input Area -->
                 <div class="text-input-section">
@@ -957,7 +1149,6 @@
                     </div>
                     <div class="action-buttons">
                         <button class="btn btn-primary" id="scanWithAI">
-                            <span class="spinner hidden" id="aiSpinner"></span>
                             <i class="fas fa-robot"></i>
                             Scan met AI
                         </button>
@@ -1060,6 +1251,23 @@
         </div>
     </div>
 
+    <!-- AI Loading Animation Overlay -->
+    <div class="ai-loading-overlay" id="aiLoadingOverlay">
+        <div class="ai-loading-container">
+            <div class="ai-loading-particles" id="aiParticles"></div>
+            <div class="ai-loading-ring ai-loading-ring-1"></div>
+            <div class="ai-loading-ring ai-loading-ring-2"></div>
+            <div class="ai-loading-ring ai-loading-ring-3"></div>
+            <div class="ai-loading-core">
+                <i class="fas fa-robot ai-loading-icon"></i>
+            </div>
+            <div class="ai-loading-text">AI ANALYSEERT...</div>
+            <div class="ai-loading-progress">
+                <div class="ai-loading-progress-bar" id="aiProgressBar"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Edit Modal -->
     <div class="modal-overlay" id="editModal">
         <div class="modal">
@@ -1120,6 +1328,7 @@
                 this.deliveries = [];
                 this.selectedDeliveries = new Set();
                 this.currentEditId = null;
+                this.selectedFiles = [];
                 
                 this.init();
             }
@@ -1128,6 +1337,144 @@
                 this.setupEventListeners();
                 this.loadFromStorage();
                 this.updateUI();
+                this.initAILoadingAnimation();
+            }
+            
+            initAILoadingAnimation() {
+                // Create particles
+                const particlesContainer = document.getElementById('aiParticles');
+                const particleCount = 20;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'ai-particle';
+                    particle.style.left = '50%';
+                    particle.style.top = '50%';
+                    particlesContainer.appendChild(particle);
+                }
+            }
+            
+            showAILoading() {
+                const overlay = document.getElementById('aiLoadingOverlay');
+                overlay.classList.add('active');
+                
+                // Fade in overlay
+                anime({
+                    targets: overlay,
+                    opacity: [0, 1],
+                    duration: 600,
+                    easing: 'easeOutQuad'
+                });
+                
+                // Rotate rings
+                anime({
+                    targets: '.ai-loading-ring-1',
+                    rotate: 360,
+                    duration: 3000,
+                    easing: 'linear',
+                    loop: true
+                });
+                
+                anime({
+                    targets: '.ai-loading-ring-2',
+                    rotate: -360,
+                    duration: 2000,
+                    easing: 'linear',
+                    loop: true
+                });
+                
+                anime({
+                    targets: '.ai-loading-ring-3',
+                    rotate: 360,
+                    duration: 2500,
+                    easing: 'linear',
+                    loop: true
+                });
+                
+                // Pulse core
+                anime({
+                    targets: '.ai-loading-core',
+                    scale: [1, 1.1, 1],
+                    duration: 2000,
+                    easing: 'easeInOutQuad',
+                    loop: true
+                });
+                
+                // Bounce icon
+                anime({
+                    targets: '.ai-loading-icon',
+                    translateY: [0, -10, 0],
+                    duration: 1500,
+                    easing: 'easeInOutSine',
+                    loop: true
+                });
+                
+                // Animate particles
+                const particles = document.querySelectorAll('.ai-particle');
+                particles.forEach((particle, index) => {
+                    const angle = (360 / particles.length) * index;
+                    const radius = 130;
+                    
+                    anime({
+                        targets: particle,
+                        translateX: [
+                            { value: 0, duration: 0 },
+                            { value: Math.cos(angle * Math.PI / 180) * radius, duration: 1000 }
+                        ],
+                        translateY: [
+                            { value: 0, duration: 0 },
+                            { value: Math.sin(angle * Math.PI / 180) * radius, duration: 1000 }
+                        ],
+                        scale: [0, 1, 0],
+                        opacity: [0, 1, 0],
+                        duration: 2000,
+                        delay: index * 100,
+                        easing: 'easeOutQuad',
+                        loop: true
+                    });
+                });
+                
+                // Pulse text
+                anime({
+                    targets: '.ai-loading-text',
+                    opacity: [0.5, 1, 0.5],
+                    duration: 2000,
+                    easing: 'easeInOutQuad',
+                    loop: true
+                });
+                
+                // Progress bar animation
+                anime({
+                    targets: '#aiProgressBar',
+                    width: ['0%', '100%'],
+                    duration: 3000,
+                    easing: 'easeInOutQuad',
+                    loop: true
+                });
+            }
+            
+            hideAILoading() {
+                const overlay = document.getElementById('aiLoadingOverlay');
+                
+                // Fade out
+                anime({
+                    targets: overlay,
+                    opacity: [1, 0],
+                    duration: 600,
+                    easing: 'easeOutQuad',
+                    complete: () => {
+                        overlay.classList.remove('active');
+                        // Remove all ongoing animations
+                        anime.remove('.ai-loading-ring-1');
+                        anime.remove('.ai-loading-ring-2');
+                        anime.remove('.ai-loading-ring-3');
+                        anime.remove('.ai-loading-core');
+                        anime.remove('.ai-loading-icon');
+                        anime.remove('.ai-particle');
+                        anime.remove('.ai-loading-text');
+                        anime.remove('#aiProgressBar');
+                    }
+                });
             }
 
             setupEventListeners() {
@@ -1267,11 +1614,52 @@
             }
 
             async processFiles(files) {
+                // Store files instead of scanning immediately
                 for (const file of files) {
                     if (file.type.startsWith('image/') || file.type === 'application/pdf') {
-                        await this.scanFile(file);
+                        this.selectedFiles.push(file);
                     }
                 }
+                this.displayFilePreview();
+            }
+            
+            displayFilePreview() {
+                const preview = document.getElementById('filePreview');
+                
+                if (this.selectedFiles.length === 0) {
+                    preview.classList.remove('show');
+                    preview.innerHTML = '';
+                    return;
+                }
+                
+                preview.classList.add('show');
+                
+                const filesHTML = this.selectedFiles.map((file, index) => {
+                    const icon = file.type === 'application/pdf' ? 'fa-file-pdf' : 'fa-image';
+                    const size = (file.size / 1024).toFixed(2) + ' KB';
+                    
+                    return `
+                        <div class="file-preview-item">
+                            <div class="file-icon">
+                                <i class="fas ${icon}"></i>
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">${file.name}</div>
+                                <div class="file-size">${size}</div>
+                            </div>
+                            <button class="file-remove" onclick="app.removeFile(${index})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+                
+                preview.innerHTML = filesHTML;
+            }
+            
+            removeFile(index) {
+                this.selectedFiles.splice(index, 1);
+                this.displayFilePreview();
             }
 
             async scanFile(file) {
@@ -1298,41 +1686,87 @@
                 const text = textInputElement.innerText.trim();
                 const htmlContent = textInputElement.innerHTML.trim();
                 
-                if (!text) {
-                    alert('Voer eerst tekst in om te scannen');
+                // Check if we have either text or files
+                if (!text && this.selectedFiles.length === 0) {
+                    alert('Voer eerst tekst in of selecteer een PDF bestand om te scannen');
                     return;
                 }
 
-                const button = document.getElementById('scanWithAI');
-                const spinner = document.getElementById('aiSpinner');
-                
-                button.classList.add('loading');
-                spinner.classList.remove('hidden');
+                // Show high-end AI loading animation
+                this.showAILoading();
 
                 try {
-                    // Send both text and HTML content for better parsing
-                    const response = await fetch('http://localhost:3001/api/smart-analyze', {
+                    let allDeliveries = [];
+                    
+                    // Process text if available
+                    if (text) {
+                        const response = await fetch('http://localhost:3001/api/smart-analyze', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ 
+                                text, 
+                                htmlContent,
+                                fileType: 'text' 
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        if (result.success && result.deliveries) {
+                            allDeliveries.push(...result.deliveries);
+                        }
+                    }
+                    
+                    // Process selected files
+                    if (this.selectedFiles.length > 0) {
+                        for (const file of this.selectedFiles) {
+                            const fileDeliveries = await this.scanFileWithAI(file);
+                            if (fileDeliveries && fileDeliveries.length > 0) {
+                                allDeliveries.push(...fileDeliveries);
+                            }
+                        }
+                    }
+                    
+                    // Add all deliveries
+                    if (allDeliveries.length > 0) {
+                        this.addDeliveries(allDeliveries);
+                        
+                        // Clear inputs
+                        textInputElement.innerHTML = '';
+                        this.selectedFiles = [];
+                        this.displayFilePreview();
+                    } else {
+                        alert('Geen leveringen gevonden in de documenten');
+                    }
+                    
+                } catch (error) {
+                    console.error('AI scan error:', error);
+                    alert('Fout bij scannen: ' + error.message);
+                } finally {
+                    // Hide high-end AI loading animation
+                    this.hideAILoading();
+                }
+            }
+            
+            async scanFileWithAI(file) {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const response = await fetch('http://localhost:3001/api/analyze-document-ai', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ 
-                            text, 
-                            htmlContent,
-                            fileType: 'text' 
-                        })
+                        body: formData
                     });
                     
                     const result = await response.json();
                     if (result.success && result.deliveries) {
-                        this.addDeliveries(result.deliveries);
-                        textInputElement.innerHTML = '';
+                        return result.deliveries;
                     }
+                    return [];
                 } catch (error) {
-                    console.error('AI scan error:', error);
-                } finally {
-                    button.classList.remove('loading');
-                    spinner.classList.add('hidden');
+                    console.error('File scan error:', error);
+                    return [];
                 }
             }
 

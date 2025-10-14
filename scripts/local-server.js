@@ -3,6 +3,7 @@ const path = require('path');
 const cors = require('cors');
 const multer = require('multer');
 const dotenv = require('dotenv');
+const fs = require('fs').promises;
 
 // Load .env from project root
 const envPath = path.join(__dirname, '..', '.env');
@@ -131,24 +132,49 @@ app.post('/api/smart-analyze', async (req, res) => {
   try {
     const { text, htmlContent, fileType } = req.body;
     
+    console.log('\n' + '='.repeat(80));
+    console.log('📥 SMART ANALYZE REQUEST RECEIVED');
+    console.log('='.repeat(80));
+    console.log('Text length:', text ? text.length : 0, 'chars');
+    console.log('HTML content length:', htmlContent ? htmlContent.length : 0, 'chars');
+    console.log('File type:', fileType);
+    
     if (!text) {
+      console.log('❌ No text provided');
       return res.status(400).json({ error: 'No text provided' });
     }
     
-    console.log('🔍 Analyzing text with Claude AI...');
+    console.log('\n📄 First 300 chars of text:');
+    console.log(text.substring(0, 300));
+    
+    console.log('\n🔍 Analyzing text with Claude AI...');
     
     // If HTML content is provided and contains tables, parse it
     let processedText = text;
     if (htmlContent && htmlContent.includes('<table')) {
+      console.log('🔍 HTML contains table, parsing...');
       const tableText = parseHTMLTables(htmlContent);
       if (tableText) {
         processedText = tableText + '\n\n' + text;
-        console.log('📋 Parsed HTML tables');
+        console.log('✅ Parsed HTML tables successfully');
+        console.log('📋 Parsed table text:');
+        console.log(tableText);
+      } else {
+        console.log('⚠️ parseHTMLTables returned empty string');
       }
+    } else {
+      console.log('ℹ️ No HTML table found or no HTML content provided');
     }
+    
+    console.log('\n📤 Sending to Claude AI...');
+    console.log('Processed text length:', processedText.length, 'chars');
     
     // Use Claude AI to intelligently extract delivery information
     const deliveries = await extractDeliveriesWithClaude(processedText);
+    
+    console.log('\n✅ Claude AI returned', deliveries.length, 'deliveries');
+    console.log('Deliveries:', JSON.stringify(deliveries, null, 2));
+    console.log('='.repeat(80) + '\n');
     
     res.json({
       success: true,
@@ -161,7 +187,9 @@ app.post('/api/smart-analyze', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Smart analysis error:', error);
+    console.error('\n❌ SMART ANALYSIS ERROR:', error);
+    console.error('Error stack:', error.stack);
+    console.log('='.repeat(80) + '\n');
     res.status(500).json({ 
       error: 'Smart analysis failed',
       details: error.message 
@@ -225,7 +253,81 @@ function parseHTMLTables(html) {
   }
 }
 
-// Document analysis endpoint
+// Document analysis endpoint with AI
+app.post('/api/analyze-document-ai', upload.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    
+    if (!file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+    
+    console.log('📄 Analyzing document with AI:', file.originalname);
+    
+    let extractedText = '';
+    
+    // Handle PDF files
+    if (file.mimetype === 'application/pdf') {
+      try {
+        // Try to use pdf-parse if available
+        const pdfParse = require('pdf-parse');
+        const dataBuffer = await fs.readFile(file.path);
+        const data = await pdfParse(dataBuffer);
+        extractedText = data.text;
+        console.log('✅ Extracted text from PDF (' + extractedText.length + ' characters)');
+        console.log('📄 First 200 chars:', extractedText.substring(0, 200) + '...');
+      } catch (pdfError) {
+        console.log('⚠️ pdf-parse error:', pdfError.message);
+        console.log('📸 Falling back to Anthropic PDF vision...');
+        
+        // Fall back to Anthropic PDF vision
+        const deliveries = await analyzePDFWithAnthropicVision(file.path, file.originalname);
+        
+        // Clean up uploaded file
+        await fs.unlink(file.path);
+        
+        return res.json({
+          success: true,
+          confidence: 90,
+          deliveries: deliveries,
+          deliveryCount: deliveries.length,
+          multipleDeliveries: deliveries.length > 1,
+          fileName: file.originalname,
+          method: 'anthropic-vision'
+        });
+      }
+    } else {
+      // For other file types, read as text
+      extractedText = await fs.readFile(file.path, 'utf-8');
+    }
+    
+    // Use Claude AI to extract deliveries
+    const deliveries = await extractDeliveriesWithClaude(extractedText);
+    
+    // Clean up uploaded file
+    await fs.unlink(file.path);
+    
+    res.json({
+      success: true,
+      confidence: 90,
+      rawText: extractedText.substring(0, 500) + '...',
+      deliveries: deliveries,
+      deliveryCount: deliveries.length,
+      multipleDeliveries: deliveries.length > 1,
+      fileName: file.originalname,
+      method: 'text-extraction'
+    });
+    
+  } catch (error) {
+    console.error('Document analysis error:', error);
+    res.status(500).json({ 
+      error: 'Document analysis failed',
+      details: error.message 
+    });
+  }
+});
+
+// Legacy document analysis endpoint (kept for compatibility)
 app.post('/api/analyze-document', upload.single('file'), async (req, res) => {
   try {
     const file = req.file;
@@ -268,6 +370,172 @@ app.post('/api/analyze-document', upload.single('file'), async (req, res) => {
   }
 });
 
+// Function to analyze PDF with Anthropic Vision API
+async function analyzePDFWithAnthropicVision(filePath, fileName) {
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+  
+  if (!ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY niet gevonden in .env file');
+  }
+  
+  try {
+    // Convert PDF to PNG image (first page)
+    console.log('🖼️ Converting PDF to PNG...');
+    const { pdfToPng } = require('pdf-to-png-converter');
+    
+    const pngPages = await pdfToPng(filePath, {
+      disableFontFace: false,
+      useSystemFonts: false,
+      viewportScale: 2.0,
+      outputFolder: 'uploads',
+      outputFileMask: 'page',
+      pagesToProcess: [1] // Only first page
+    });
+    
+    if (!pngPages || pngPages.length === 0) {
+      throw new Error('Could not convert PDF to PNG');
+    }
+    
+    // Get the PNG buffer from first page
+    const pngBuffer = pngPages[0].content;
+    const base64PNG = pngBuffer.toString('base64');
+    
+    console.log('✅ PDF converted to PNG');
+    console.log('📤 Sending PNG to Anthropic Vision API...');
+    
+    const prompt = `
+Je bent een expert in het analyseren van leveringsdocumenten en PDF's, SPECIAAL TABELLEN.
+
+Je krijgt nu een PDF document als afbeelding. Dit document bevat waarschijnlijk een TABEL met leveringen.
+
+LET OP: Als je een TABEL ziet met kolommen zoals:
+- REF / Referentie nummer
+- Klant / Bedrijfsnaam  
+- Adres / Locatie
+- Tijd / Tijdslot / Uur
+- Nummer / Telefoon / Contact
+
+Dan is ELKE RIJ in de tabel = 1 LEVERING!
+
+BELANGRIJK: 
+- Negeer de HEADER rij (kolom namen)
+- Elke DATA rij = 1 aparte levering
+- Als er 10 rijen data zijn → 10 leveringen
+- Als er 20 rijen data zijn → 20 leveringen
+
+Voor elke levering (elke rij), extraheer:
+- customerRef: Waarde uit REF kolom (bijv. ORD-ANT2801, ORD-BRU2802)
+- deliveryAddress:
+  - line1: Waarde uit Adres kolom (volledig adres)
+  - contactName: Waarde uit Klant kolom (bedrijfsnaam)
+  - contactPhone: Waarde uit Nummer kolom (telefoonnummer)
+- serviceDate: Datum uit document titel of header (YYYY-MM-DD formaat, bijv. "28 oktober 2025" → "2025-10-28")
+- timeWindowStart: Begin tijd uit Tijd kolom (bijv. "07:00" uit "07:00 - 09:00")
+- timeWindowEnd: Eind tijd uit Tijd kolom (bijv. "09:00" uit "07:00 - 09:00")
+- items: [{"description": "Standaard levering", "quantity": 1, "tempClass": "ambient"}]
+- notes: Extra info indien aanwezig
+- priority: "normal"
+
+VOORBEELD:
+Als je deze tabel ziet:
+| REF | Klant | Adres | Tijd | Nummer |
+| ORD-ANT2801 | Bistro Nova | Lange Koepoortstraat 23, 2000 Antwerpen | 07:00 – 09:00 | +32 470 81 32 40 |
+| ORD-BRU2802 | Maison Blanche | Rue du Marché 12, 1000 Brussel | 08:15 – 10:30 | +32 491 27 84 66 |
+
+Dan moet je 2 leveringen maken:
+[
+  {
+    "customerRef": "ORD-ANT2801",
+    "deliveryAddress": {
+      "line1": "Lange Koepoortstraat 23, 2000 Antwerpen",
+      "contactName": "Bistro Nova",
+      "contactPhone": "+32 470 81 32 40"
+    },
+    "serviceDate": "2025-10-28",
+    "timeWindowStart": "07:00",
+    "timeWindowEnd": "09:00",
+    "items": [{"description": "Standaard levering", "quantity": 1, "tempClass": "ambient"}],
+    "notes": "",
+    "priority": "normal"
+  },
+  {
+    "customerRef": "ORD-BRU2802",
+    "deliveryAddress": {
+      "line1": "Rue du Marché 12, 1000 Brussel",
+      "contactName": "Maison Blanche",
+      "contactPhone": "+32 491 27 84 66"
+    },
+    "serviceDate": "2025-10-28",
+    "timeWindowStart": "08:15",
+    "timeWindowEnd": "10:30",
+    "items": [{"description": "Standaard levering", "quantity": 1, "tempClass": "ambient"}],
+    "notes": "",
+    "priority": "normal"
+  }
+]
+
+Analyseer nu het PDF document en geef een JSON array terug met ALLE leveringen.
+Geef ALLEEN de JSON array terug, geen uitleg, geen markdown code fences.
+`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 4000,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: 'image/png',
+                  data: base64PNG
+                }
+              },
+              {
+                type: 'text',
+                text: prompt
+              }
+            ]
+          }
+        ]
+      })
+    });
+    
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Anthropic API error: ${response.status} ${response.statusText} - ${errorBody}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.content && result.content[0]) {
+      let aiResponse = result.content[0].text;
+      
+      // Remove code fences if present
+      aiResponse = aiResponse.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      
+      const deliveries = JSON.parse(aiResponse);
+      console.log(`✅ Anthropic Vision extracted ${Array.isArray(deliveries) ? deliveries.length : 1} delivery(ies) from PDF`);
+      return Array.isArray(deliveries) ? deliveries : [deliveries];
+    }
+    
+    throw new Error('Anthropic API gaf geen bruikbaar antwoord terug.');
+    
+  } catch (error) {
+    console.error('Anthropic Vision API error:', error);
+    throw error;
+  }
+}
+
 // AI-powered delivery extraction using Claude API
 async function extractDeliveriesWithClaude(text) {
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -278,25 +546,39 @@ async function extractDeliveriesWithClaude(text) {
   
   try {
     const prompt = `
-Je bent een expert in het analyseren van leveringsdocumenten, emails en tabellen. 
+Je bent een expert in het analyseren van leveringsdocumenten, emails en VOORAL TABELLEN. 
 
 === STAP 1: ANALYSE VAN HET DOCUMENT ===
 Analyseer eerst het document en bepaal:
-1. Wat is het FORMAT? (tabel, genummerde lijst, paragrafen, enkele levering, etc.)
+1. Wat is het FORMAT? (TABEL, genummerde lijst, paragrafen, enkele levering, etc.)
 2. Hoeveel LEVERINGEN zijn er? (tel zorgvuldig alle aparte leveringen)
 3. Hoe is de DATA GESTRUCTUREERD? (kolommen, bullets, tekst)
 
+⚠️ BELANGRIJK: Als je een TABEL ziet:
+- Elke RIJ (behalve header) = 1 APARTE LEVERING!
+- 10 rijen data = 10 leveringen
+- 20 rijen data = 20 leveringen
+- Negeer de header rij!
+
 === VOORBEELDEN VAN VERSCHILLENDE FORMATEN ===
 
-VOORBEELD A - TABEL FORMAT (meerdere leveringen):
+VOORBEELD A - TABEL FORMAT (meerdere leveringen) ⭐ BELANGRIJK!
 \`\`\`
-| Ref | Klant | Adres | Tijdslot | Contact |
-| ORD-001 | Bakkerij Jan | Hoofdstraat 1, Brussel | 08:00–10:00 | +32 2 123 45 67 |
-| ORD-002 | Café Marie | Kerkstraat 5, Antwerpen | 09:00–11:00 | +32 3 234 56 78 |
+| REF | Klant | Adres | Tijd | Nummer |
+| ORD-ANT2801 | Bistro Nova | Lange Koepoortstraat 23, 2000 Antwerpen | 07:00 – 09:00 | +32 470 81 32 40 |
+| ORD-BRU2802 | Maison Blanche | Rue du Marché 12, 1000 Brussel | 08:15 – 10:30 | +32 491 27 84 66 |
+| ORD-GEN2803 | De Smaakfabriek | Hoogpoort 101, 9000 Gent | 09:00 – 11:15 | +32 472 69 10 58 |
 \`\`\`
 → Format: TABEL
-→ Aantal leveringen: 2 (één per rij)
-→ Output: Array met 2 objecten
+→ Aantal leveringen: 3 (één per data rij, header niet meetellen!)
+→ Output: Array met 3 objecten
+
+TABEL KOLOM MAPPING:
+- REF kolom → customerRef
+- Klant kolom → deliveryAddress.contactName
+- Adres kolom → deliveryAddress.line1
+- Tijd kolom → timeWindowStart en timeWindowEnd (split op " – " of " - ")
+- Nummer kolom → deliveryAddress.contactPhone
 
 VOORBEELD B - GENUMMERDE LIJST (meerdere leveringen):
 \`\`\`
@@ -327,9 +609,15 @@ Tijd: 10:00 - 13:00
 
 === STAP 2: EXTRACTIE REGELS ===
 
-Voor TABEL format:
-- Elke DATA RIJ (niet de header) = 1 levering
-- Map kolommen naar velden (Ref→customerRef, Klant→contactName, etc.)
+Voor TABEL format: ⭐
+- HEADER rij = kolom namen (bijv. REF, Klant, Adres, Tijd, Nummer) → NEGEER DEZE!
+- Elke DATA RIJ daarna = 1 levering
+- Map kolommen naar velden:
+  * REF/Referentie kolom → customerRef
+  * Klant/Naam kolom → deliveryAddress.contactName
+  * Adres kolom → deliveryAddress.line1
+  * Tijd/Tijdslot kolom → timeWindowStart + timeWindowEnd
+  * Nummer/Telefoon kolom → deliveryAddress.contactPhone
 
 Voor GENUMMERDE LIJST:
 - Elk genummerd item = 1 levering
@@ -350,28 +638,52 @@ Voor elke levering:
   - line1: Volledig adres (straat, nummer, postcode, stad)
   - contactName: Naam klant/bedrijf
   - contactPhone: Telefoonnummer
-- serviceDate: Leverdatum in YYYY-MM-DD (haal uit email tekst, gebruik voor alle leveringen)
-- timeWindowStart: Start tijd (HH:MM)
-- timeWindowEnd: Eind tijd (HH:MM)
+- serviceDate: Leverdatum in YYYY-MM-DD (haal uit document titel/header, bijv. "28 oktober 2025" → "2025-10-28")
+- timeWindowStart: Start tijd (HH:MM format, bijv. "07:00" uit "07:00 - 09:00")
+- timeWindowEnd: Eind tijd (HH:MM format, bijv. "09:00" uit "07:00 - 09:00")
 - items: [{"description": "Standaard levering", "quantity": 1, "tempClass": "ambient"}]
 - notes: Relevante extra info
 - priority: "normal" (tenzij urgent/spoed vermeld)
+
+⚠️ LET OP BIJ TIJD PARSING:
+- "07:00 – 09:00" → start: "07:00", end: "09:00"
+- "08:15 – 10:30" → start: "08:15", end: "10:30"
+- Let op de streepjes: " – " of " - " of "-"
 
 === TEKST OM TE ANALYSEREN ===
 ${text}
 
 === OUTPUT FORMAT ===
 Denk eerst na over:
-1. Wat is het format?
-2. Hoeveel leveringen zijn er?
-3. Hoe extraheer ik de data?
+1. Wat is het format? (Is het een TABEL? Zo ja, tel de rijen!)
+2. Hoeveel leveringen zijn er? (Tel elke data rij als aparte levering)
+3. Hoe extraheer ik de data? (Map tabel kolommen naar JSON velden)
 
 Geef dan een JSON array terug met EXACT het aantal leveringen dat je hebt gevonden.
-- Als het een tabel is met 10 rijen → 10 leveringen
+- Als het een tabel is met 10 DATA rijen (+ 1 header) → 10 leveringen
 - Als het een lijst is met 5 items → 5 leveringen  
 - Als het 1 enkele levering is → 1 levering
 
-Geef ALLEEN de JSON array terug, geen uitleg.
+VOORBEELD OUTPUT voor een tabel met 3 leveringen:
+[
+  {
+    "customerRef": "ORD-ANT2801",
+    "deliveryAddress": {
+      "line1": "Lange Koepoortstraat 23, 2000 Antwerpen",
+      "contactName": "Bistro Nova",
+      "contactPhone": "+32 470 81 32 40"
+    },
+    "serviceDate": "2025-10-28",
+    "timeWindowStart": "07:00",
+    "timeWindowEnd": "09:00",
+    "items": [{"description": "Standaard levering", "quantity": 1, "tempClass": "ambient"}],
+    "notes": "",
+    "priority": "normal"
+  },
+  ... (2 more objects)
+]
+
+Geef ALLEEN de JSON array terug, geen uitleg, geen markdown code fences.
 `;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -383,7 +695,7 @@ Geef ALLEEN de JSON array terug, geen uitleg.
       },
       body: JSON.stringify({
         model: 'claude-3-haiku-20240307',
-        max_tokens: 4000,
+        max_tokens: 4096,
         messages: [
           {
             role: 'user',

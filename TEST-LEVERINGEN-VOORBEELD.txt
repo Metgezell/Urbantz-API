@@ -1,0 +1,64 @@
+=====================================
+    LEVERINGEN OVERZICHT - 15/10/2025
+=====================================
+
+1. REF: BXL-2501
+   Klant: Bakkerij De Gouden Oven
+   Adres: Koningstraat 45, 1000 Brussel
+   Contact: Marie Dubois
+   Nummer: +32 2 512 34 56
+   Tijd: 08:00 - 10:00
+   Datum: 15/10/2025
+   Items: 2x Bloem zakken (25kg), 1x Gist
+
+2. REF: ANT-3402
+   Klant: Restaurant Le Petit Paris
+   Adres: Grote Markt 12, 2000 Antwerpen
+   Contact: Jean-Luc Vermeulen
+   Nummer: +32 3 234 56 78
+   Tijd: 10:00 - 12:00
+   Datum: 15/10/2025
+   Items: Verse groenten, 3x Wijnkisten
+
+3. REF: GNT-5503
+   Klant: Café Den Engel
+   Adres: Vlaanderenstraat 8, 9000 Gent
+   Contact: Pieter Janssens
+   Nummer: +32 9 223 45 67
+   Tijd: 13:00 - 15:00
+   Datum: 15/10/2025
+   Items: 2x Biervaten, Glazen
+
+4. REF: LVN-6604
+   Klant: Hotel De Kroon
+   Adres: Bondgenotenlaan 50, 3000 Leuven
+   Contact: Sarah De Vries
+   Nummer: +32 16 234 567
+   Tijd: 14:00 - 16:00
+   Datum: 15/10/2025
+   Items: Linnengoed, Schoonmaakproducten
+
+5. REF: BRG-7705
+   Klant: Chocolaterie Praline
+   Adres: Marktplein 3, 8000 Brugge
+   Contact: Sophie Maes
+   Nummer: +32 50 345 678
+   Tijd: 09:00 - 11:00
+   Datum: 15/10/2025
+   Items: 5x Chocolade dozen, Verpakkingsmateriaal
+
+=====================================
+         TOTAAL: 5 LEVERINGEN
+=====================================
+
+Opmerkingen:
+- BXL-2501: URGENT - Voor 10:00 leveren
+- ANT-3402: Wijn voorzichtig behandelen
+- GNT-5503: Bellen bij aankomst
+- LVN-6604: Aflever bij achterdeur
+- BRG-7705: Temperatuur gecontroleerd vervoer
+
+Contact voor vragen:
+Planning: +32 2 555 1234
+Email: planning@transport.be
+
