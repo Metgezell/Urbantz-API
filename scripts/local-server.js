@@ -2,7 +2,13 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const multer = require('multer');
-require('dotenv').config();
+const dotenv = require('dotenv');
+
+// Load .env from project root
+const envPath = path.join(__dirname, '..', '.env');
+console.log('Loading .env from:', envPath);
+dotenv.config({ path: envPath });
+console.log('ANTHROPIC_API_KEY loaded:', process.env.ANTHROPIC_API_KEY ? 'YES (length: ' + process.env.ANTHROPIC_API_KEY.length + ')' : 'NO');
 
 const app = express();
 const PORT = 3001;
@@ -267,8 +273,7 @@ async function extractDeliveriesWithClaude(text) {
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
   
   if (!ANTHROPIC_API_KEY) {
-    console.warn('⚠️ ANTHROPIC_API_KEY not found, falling back to pattern matching');
-    return extractDeliveriesWithPatterns(text);
+    throw new Error('ANTHROPIC_API_KEY niet gevonden in .env file. De AI scan functie vereist een geldige API key.');
   }
   
   try {
@@ -377,8 +382,8 @@ Geef ALLEEN de JSON array terug, geen uitleg.
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 8000,
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 4000,
         messages: [
           {
             role: 'user',
@@ -389,15 +394,19 @@ Geef ALLEEN de JSON array terug, geen uitleg.
     });
     
     if (!response.ok) {
-      throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
+      const errorBody = await response.text();
+      throw new Error(`Claude API error: ${response.status} ${response.statusText} - ${errorBody}`);
     }
     
     const result = await response.json();
     
     if (result.content && result.content[0]) {
-      const aiResponse = result.content[0].text;
+      let aiResponse = result.content[0].text;
       
       try {
+        // Remove code fences if present (```json ... ```)
+        aiResponse = aiResponse.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        
         // Parse AI response as JSON
         const deliveries = JSON.parse(aiResponse);
         console.log(`✅ Claude AI extracted ${Array.isArray(deliveries) ? deliveries.length : 1} delivery(ies)`);
@@ -405,15 +414,15 @@ Geef ALLEEN de JSON array terug, geen uitleg.
       } catch (parseError) {
         console.error('Failed to parse Claude response:', parseError);
         console.log('Claude response:', aiResponse);
-        return extractDeliveriesWithPatterns(text);
+        throw new Error('Claude API gaf een ongeldig antwoord. Kon leveringen niet parsen.');
       }
     }
     
-    return extractDeliveriesWithPatterns(text);
+    throw new Error('Claude API gaf geen bruikbaar antwoord terug.');
     
   } catch (error) {
     console.error('Claude API error:', error);
-    return extractDeliveriesWithPatterns(text);
+    throw error;
   }
 }
 
@@ -480,7 +489,7 @@ function extractSmartCustomerRef(section) {
   
   for (const pattern of patterns) {
     const match = section.match(pattern);
-    if (match) return match[1].trim();
+    if (match && match[1]) return match[1].trim();
   }
   
   return `AUTO-${Math.floor(Math.random() * 1000)}`;
@@ -495,7 +504,7 @@ function extractSmartAddress(section) {
   
   for (const pattern of addressPatterns) {
     const match = section.match(pattern);
-    if (match) {
+    if (match && match[1]) {
       const address = match[1].trim();
       return {
         line1: address,
@@ -520,7 +529,7 @@ function extractContactName(section) {
   
   for (const pattern of patterns) {
     const match = section.match(pattern);
-    if (match) return match[1].trim();
+    if (match && match[1]) return match[1].trim();
   }
   
   return "Contact persoon";
@@ -534,7 +543,7 @@ function extractPhone(section) {
   
   for (const pattern of phonePatterns) {
     const match = section.match(pattern);
-    if (match) return match[0];
+    if (match && match[0]) return match[0];
   }
   
   return "+32 000 000 000";
@@ -549,7 +558,7 @@ function extractSmartDate(section) {
   
   for (const pattern of datePatterns) {
     const match = section.match(pattern);
-    if (match) {
+    if (match && match[1]) {
       let date = match[1];
       // Convert to ISO format
       if (date.includes('/')) {
@@ -577,7 +586,7 @@ function extractSmartTimeStart(section) {
   
   for (const pattern of timePatterns) {
     const match = section.match(pattern);
-    if (match) return match[1];
+    if (match && match[1]) return match[1];
   }
   
   return "09:00";
@@ -591,7 +600,7 @@ function extractSmartTimeEnd(section) {
   
   for (const pattern of timePatterns) {
     const match = section.match(pattern);
-    if (match) return match[1];
+    if (match && match[1]) return match[1];
   }
   
   return "17:00";
