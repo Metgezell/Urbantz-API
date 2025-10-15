@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run linting
+      run: npm run lint
+      
+    - name: Run tests
+      run: npm test
+      env:
+        # Use mock API keys for testing
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'test-key' }}
+        URBANTZ_API_KEY: ${{ secrets.URBANTZ_API_KEY || 'test-key' }}
+        
+    - name: Run security audit
+      run: npm audit --audit-level moderate
+      
+    - name: Check for AI core changes
+      run: |
+        echo "Checking for changes to AI core files..."
+        if git diff --name-only HEAD~1 HEAD | grep -E '^(api/smart-analyze\.js|api/analyze-document\.js|scripts/local-server\.js)$'; then
+          echo "⚠️ AI core files modified - ensure tests pass"
+        fi
+
+  security:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check for secrets in code
+      run: |
+        echo "Scanning for potential secrets..."
+        if grep -r -i "api[_-]key\|secret\|password\|token" --include="*.js" --include="*.ts" --exclude-dir=node_modules --exclude-dir=.git .; then
+          echo "⚠️ Potential secrets found in code"
+          echo "Please ensure no real API keys are committed"
+        else
+          echo "✅ No obvious secrets found"
+        fi
+        
+    - name: Validate environment template
+      run: |
+        if [ ! -f ".env.required" ]; then
+          echo "❌ .env.required file missing"
+          exit 1
+        fi
+        echo "✅ Environment template found"
+
+  ai-core-protection:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Check AI core changes
+      run: |
+        echo "🔍 Checking for AI core modifications..."
+        
+        # Get list of changed files
+        CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+        
+        # Check for AI core files
+        AI_CORE_FILES=$(echo "$CHANGED_FILES" | grep -E '^(api/smart-analyze\.js|api/analyze-document\.js|scripts/local-server\.js)$' || true)
+        
+        if [ -n "$AI_CORE_FILES" ]; then
+          echo "⚠️ AI core files modified:"
+          echo "$AI_CORE_FILES"
+          echo ""
+          echo "Please ensure:"
+          echo "1. Changes are intentional and necessary"
+          echo "2. All tests pass"
+          echo "3. Consider adding [ALLOW_AI_CORE_CHANGE] to commit message"
+          echo "4. Update test fixtures if extraction logic changes"
+        else
+          echo "✅ No AI core files modified"
+        fi

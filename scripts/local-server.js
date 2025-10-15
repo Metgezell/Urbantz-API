@@ -276,6 +276,13 @@ app.post('/api/analyze-document-ai', upload.single('file'), async (req, res) => 
         extractedText = data.text;
         console.log('✅ Extracted text from PDF (' + extractedText.length + ' characters)');
         console.log('📄 First 200 chars:', extractedText.substring(0, 200) + '...');
+        
+        // Check if extracted text is meaningful
+        if (extractedText.trim().length < 50) {
+          console.log('⚠️ pdf-parse extracted very little text, trying Vision API...');
+          throw new Error('Insufficient text extracted');
+        }
+        
       } catch (pdfError) {
         console.log('⚠️ pdf-parse error:', pdfError.message);
         console.log('📸 Falling back to Anthropic PDF vision...');
@@ -385,11 +392,13 @@ async function analyzePDFWithAnthropicVision(filePath, fileName) {
     
     const pngPages = await pdfToPng(filePath, {
       disableFontFace: false,
-      useSystemFonts: false,
-      viewportScale: 2.0,
+      useSystemFonts: true,  // Enable system fonts for better text rendering
+      viewportScale: 3.0,    // Higher scale for better text clarity
       outputFolder: 'uploads',
       outputFileMask: 'page',
-      pagesToProcess: [1] // Only first page
+      pagesToProcess: [1],   // Only first page
+      strict: false,         // Don't fail on font issues
+      verbosityLevel: 0      // Reduce verbosity
     });
     
     if (!pngPages || pngPages.length === 0) {
@@ -475,6 +484,12 @@ Dan moet je 2 leveringen maken:
 ]
 
 Analyseer nu het PDF document en geef een JSON array terug met ALLE leveringen.
+BELANGRIJK: Gebruik de EXACTE tekst die je in het document ziet - vertaal NIETS!
+- Als er "서울특별시 강남구" staat, gebruik dat
+- Als er "주식회사 세진" staat, gebruik dat  
+- Als er "Green Pantry" staat, gebruik dat
+- Behoud de originele taal en tekens
+
 Geef ALLEEN de JSON array terug, geen uitleg, geen markdown code fences.
 `;
 
@@ -486,8 +501,8 @@ Geef ALLEEN de JSON array terug, geen uitleg, geen markdown code fences.
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 4000,
+        model: 'claude-3-5-sonnet-20241022',  // Use the latest Sonnet model for better vision
+        max_tokens: 8000,  // Increase token limit for better responses
         messages: [
           {
             role: 'user',
@@ -517,14 +532,21 @@ Geef ALLEEN de JSON array terug, geen uitleg, geen markdown code fences.
     
     const result = await response.json();
     
+    console.log('🔍 Anthropic Vision API Response:', JSON.stringify(result, null, 2));
+    
     if (result.content && result.content[0]) {
       let aiResponse = result.content[0].text;
+      
+      console.log('📝 Raw AI Response:', aiResponse);
       
       // Remove code fences if present
       aiResponse = aiResponse.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
       
+      console.log('🧹 Cleaned AI Response:', aiResponse);
+      
       const deliveries = JSON.parse(aiResponse);
       console.log(`✅ Anthropic Vision extracted ${Array.isArray(deliveries) ? deliveries.length : 1} delivery(ies) from PDF`);
+      console.log('📋 Extracted deliveries:', JSON.stringify(deliveries, null, 2));
       return Array.isArray(deliveries) ? deliveries : [deliveries];
     }
     

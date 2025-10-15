@@ -1,0 +1,34 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# AI Core Protection Hook
+# This hook prevents accidental modifications to critical AI integration files
+# unless explicitly allowed with [ALLOW_AI_CORE_CHANGE] in commit message
+
+protected_paths="^api/smart-analyze\.js$|^api/analyze-document\.js$|^scripts/local-server\.js$|^ai-core/"
+
+# Check if commit message contains override flag
+if git log -1 --pretty=%B | grep -q "\[ALLOW_AI_CORE_CHANGE\]"; then
+  echo "⚠️  AI Core override detected - proceeding with caution"
+else
+  # Check for changes to protected paths
+  if git diff --cached --name-only | grep -E "$protected_paths"; then
+    echo "⛔ BLOCKED: Changes to AI core files detected!"
+    echo ""
+    echo "Protected files:"
+    echo "  - api/smart-analyze.js"
+    echo "  - api/analyze-document.js" 
+    echo "  - scripts/local-server.js (AI functions)"
+    echo "  - ai-core/ (future directory)"
+    echo ""
+    echo "To override this protection, add [ALLOW_AI_CORE_CHANGE] to your commit message:"
+    echo "  git commit -m 'feat(ai): improve table parsing [ALLOW_AI_CORE_CHANGE]'"
+    echo ""
+    echo "This protection prevents accidental modifications to your working AI integration."
+    exit 1
+  fi
+fi
+
+# Run linting and tests
+echo "🔍 Running pre-commit checks..."
+npx lint-staged

@@ -208,6 +208,11 @@ Geef dan een JSON array terug met EXACT het aantal leveringen dat je hebt gevond
 - Als het een lijst is met 5 items → 5 leveringen  
 - Als het 1 enkele levering is → 1 levering
 
+BELANGRIJK: Gebruik de EXACTE tekst uit het document - vertaal NIETS!
+- Behoud originele talen (Nederlands, Engels, Duits, Frans, etc.)
+- Gebruik exacte bedrijfsnamen zoals ze in het document staan
+- Behoud originele adressen en telefoonnummers
+
 Geef ALLEEN de JSON array terug, geen uitleg.
 `;
 

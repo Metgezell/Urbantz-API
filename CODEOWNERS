@@ -1,0 +1,24 @@
+# Code Owners for Urbantz AI Integration
+# This file defines who can approve changes to specific parts of the codebase
+
+# AI Core - Critical AI integration files (requires explicit approval)
+/api/smart-analyze.js @koen-domus
+/api/analyze-document.js @koen-domus
+/scripts/local-server.js @koen-domus
+/ai-core/ @koen-domus
+
+# Test fixtures and expected outputs (AI core related)
+/test-fixtures/ @koen-domus
+
+# Security and configuration files
+/.husky/ @koen-domus
+/.github/ @koen-domus
+/CODEOWNERS @koen-domus
+/.env.required @koen-domus
+
+# Documentation (AI integration specific)
+/docs/ai-integration/ @koen-domus
+/README-AI-SECURITY.md @koen-domus
+
+# All other files can be modified by any team member
+# (Add team members as needed)

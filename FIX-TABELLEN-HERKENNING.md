@@ -286,3 +286,4 @@ Als het niet werkt:
 *Server restart: 14 Oct 2025, 22:58*
 *Wijzigingen: AI prompts verbeterd voor tabel herkenning*
 
+

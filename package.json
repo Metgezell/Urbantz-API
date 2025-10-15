@@ -10,7 +10,11 @@
     "start": "node local-server.js",
     "server": "node local-server.js",
     "server:watch": "nodemon local-server.js",
-    "python:watch": "watchfiles \"python start-server-fast.py\" --extensions py"
+    "python:watch": "watchfiles \"python start-server-fast.py\" --extensions py",
+    "lint": "echo 'Linting not configured yet'",
+    "test": "jest",
+    "prepare": "husky install",
+    "pre-commit": "lint-staged"
   },
   "dependencies": {
     "animejs": "^4.2.2",
@@ -25,6 +29,10 @@
   },
   "devDependencies": {
     "@types/node": "^20.8.0",
+    "dotenv-safe": "^9.1.0",
+    "husky": "^9.1.7",
+    "jest": "^30.2.0",
+    "lint-staged": "^16.2.4",
     "nodemon": "^3.0.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
