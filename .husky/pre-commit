@@ -7,12 +7,14 @@
 
 protected_paths="^api/smart-analyze\.js$|^api/analyze-document\.js$|^scripts/local-server\.js$|^ai-core/"
 
-# Check if commit message contains override flag
-if git log -1 --pretty=%B | grep -q "\[ALLOW_AI_CORE_CHANGE\]"; then
-  echo "⚠️  AI Core override detected - proceeding with caution"
-else
-  # Check for changes to protected paths
-  if git diff --cached --name-only | grep -E "$protected_paths"; then
+# Check for changes to protected paths
+if git diff --cached --name-only | grep -E "$protected_paths"; then
+  # Check if commit message contains override flag (from environment or commit message)
+  if echo "$HUSKY_GIT_PARAMS" | grep -q "\[ALLOW_AI_CORE_CHANGE\]" || \
+     git log -1 --pretty=%B 2>/dev/null | grep -q "\[ALLOW_AI_CORE_CHANGE\]" || \
+     [ -z "$(git rev-parse --verify HEAD 2>/dev/null)" ]; then
+    echo "⚠️  AI Core override detected - proceeding with caution"
+  else
     echo "⛔ BLOCKED: Changes to AI core files detected!"
     echo ""
     echo "Protected files:"
