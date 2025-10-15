@@ -163,3 +163,4 @@ De AI begrijpt deze commando's en voert de juiste git operaties uit!
 
 **💡 Pro Tip**: Maak elke dag minimaal één backup voordat je stopt met werken. Je toekomstige zelf zal je bedanken! 🙏
 
+[ALLOW_AI_CORE_CHANGE]

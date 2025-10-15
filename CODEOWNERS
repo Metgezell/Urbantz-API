@@ -2,23 +2,24 @@
 # This file defines who can approve changes to specific parts of the codebase
 
 # AI Core - Critical AI integration files (requires explicit approval)
-/api/smart-analyze.js @koen-domus
-/api/analyze-document.js @koen-domus
-/scripts/local-server.js @koen-domus
-/ai-core/ @koen-domus
+/api/smart-analyze.js @metgezell
+/api/analyze-document.js @metgezell
+/scripts/local-server.js @metgezell
+/ai-core/ @metgezell
 
 # Test fixtures and expected outputs (AI core related)
-/test-fixtures/ @koen-domus
+/test-fixtures/ @metgezell
 
 # Security and configuration files
-/.husky/ @koen-domus
-/.github/ @koen-domus
-/CODEOWNERS @koen-domus
-/.env.required @koen-domus
+/.husky/ @metgezell
+/.github/ @metgezell
+/CODEOWNERS @metgezell
+/.env.required @metgezell
 
 # Documentation (AI integration specific)
-/docs/ai-integration/ @koen-domus
-/README-AI-SECURITY.md @koen-domus
+/docs/ai-integration/ @metgezell
+/README-AI-SECURITY.md @metgezell
 
 # All other files can be modified by any team member
 # (Add team members as needed)
+

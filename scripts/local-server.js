@@ -576,6 +576,12 @@ Analyseer eerst het document en bepaal:
 2. Hoeveel LEVERINGEN zijn er? (tel zorgvuldig alle aparte leveringen)
 3. Hoe is de DATA GESTRUCTUREERD? (kolommen, bullets, tekst)
 
+🚨 KRITIEKE VALIDATIE:
+- Als de tekst GEEN leveringsdata bevat (zoals "test", "hello", random tekst), geef dan een lege array terug: []
+- Als de tekst GEEN herkenbare leveringsinformatie heeft (adressen, referenties, tijden), geef dan een lege array terug: []
+- Genereer NOOIT fictieve leveringen als er geen echte data is!
+- Alleen extraheer data die daadwerkelijk in de tekst staat!
+
 ⚠️ BELANGRIJK: Als je een TABEL ziet:
 - Elke RIJ (behalve header) = 1 APARTE LEVERING!
 - 10 rijen data = 10 leveringen
@@ -681,10 +687,16 @@ Denk eerst na over:
 2. Hoeveel leveringen zijn er? (Tel elke data rij als aparte levering)
 3. Hoe extraheer ik de data? (Map tabel kolommen naar JSON velden)
 
+🚨 VALIDATIE VOOR OUTPUT:
+- Als er GEEN leveringsdata gevonden wordt → geef een lege array terug: []
+- Als er alleen test/random tekst staat → geef een lege array terug: []
+- Alleen als er ECHTE leveringsdata is → extraheer de data
+
 Geef dan een JSON array terug met EXACT het aantal leveringen dat je hebt gevonden.
 - Als het een tabel is met 10 DATA rijen (+ 1 header) → 10 leveringen
 - Als het een lijst is met 5 items → 5 leveringen  
 - Als het 1 enkele levering is → 1 levering
+- Als er GEEN leveringsdata is → []
 
 VOORBEELD OUTPUT voor een tabel met 3 leveringen:
 [

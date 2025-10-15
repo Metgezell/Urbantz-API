@@ -123,6 +123,12 @@ Analyseer eerst het document en bepaal:
 2. Hoeveel LEVERINGEN zijn er? (tel zorgvuldig alle aparte leveringen)
 3. Hoe is de DATA GESTRUCTUREERD? (kolommen, bullets, tekst)
 
+🚨 KRITIEKE VALIDATIE:
+- Als de tekst GEEN leveringsdata bevat (zoals "test", "hello", random tekst), geef dan een lege array terug: []
+- Als de tekst GEEN herkenbare leveringsinformatie heeft (adressen, referenties, tijden), geef dan een lege array terug: []
+- Genereer NOOIT fictieve leveringen als er geen echte data is!
+- Alleen extraheer data die daadwerkelijk in de tekst staat!
+
 === VOORBEELDEN VAN VERSCHILLENDE FORMATEN ===
 
 VOORBEELD A - TABEL FORMAT (meerdere leveringen):
@@ -203,10 +209,16 @@ Denk eerst na over:
 2. Hoeveel leveringen zijn er?
 3. Hoe extraheer ik de data?
 
+🚨 VALIDATIE VOOR OUTPUT:
+- Als er GEEN leveringsdata gevonden wordt → geef een lege array terug: []
+- Als er alleen test/random tekst staat → geef een lege array terug: []
+- Alleen als er ECHTE leveringsdata is → extraheer de data
+
 Geef dan een JSON array terug met EXACT het aantal leveringen dat je hebt gevonden.
 - Als het een tabel is met 10 rijen → 10 leveringen
 - Als het een lijst is met 5 items → 5 leveringen  
 - Als het 1 enkele levering is → 1 levering
+- Als er GEEN leveringsdata is → []
 
 BELANGRIJK: Gebruik de EXACTE tekst uit het document - vertaal NIETS!
 - Behoud originele talen (Nederlands, Engels, Duits, Frans, etc.)
@@ -259,6 +271,21 @@ Geef ALLEEN de JSON array terug, geen uitleg.
 }
 
 function extractDeliveriesWithPatterns(text) {
+  // 🚨 KRITIEKE VALIDATIE: Geen fictieve data voor ongeldige input
+  if (!text || text.trim().length < 10) {
+    return [];
+  }
+  
+  // Check if text contains actual delivery-related keywords
+  const deliveryKeywords = ['levering', 'delivery', 'adres', 'address', 'klant', 'customer', 'order', 'bestelling', 'tijd', 'time', 'contact', 'telefoon', 'phone'];
+  const hasDeliveryKeywords = deliveryKeywords.some(keyword => 
+    text.toLowerCase().includes(keyword.toLowerCase())
+  );
+  
+  if (!hasDeliveryKeywords) {
+    return [];
+  }
+  
   const deliveries = [];
   
   // Smart section detection
@@ -333,7 +360,8 @@ function extractSmartCustomerRef(section) {
     if (match) return match[1].trim();
   }
   
-  return `AUTO-${Math.floor(Math.random() * 1000)}`;
+  // 🚨 Geen automatische referentie generatie meer!
+  return null;
 }
 
 function extractSmartAddress(section) {

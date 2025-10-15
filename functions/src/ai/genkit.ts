@@ -14,6 +14,12 @@ Analyseer eerst het document en bepaal:
 2. Hoeveel LEVERINGEN zijn er? (tel zorgvuldig alle aparte leveringen)
 3. Hoe is de DATA GESTRUCTUREERD? (kolommen, bullets, tekst)
 
+🚨 KRITIEKE VALIDATIE:
+- Als de tekst GEEN leveringsdata bevat (zoals "test", "hello", random tekst), geef dan een lege array terug: []
+- Als de tekst GEEN herkenbare leveringsinformatie heeft (adressen, referenties, tijden), geef dan een lege array terug: []
+- Genereer NOOIT fictieve leveringen als er geen echte data is!
+- Alleen extraheer data die daadwerkelijk in de tekst staat!
+
 === VOORBEELDEN VAN VERSCHILLENDE FORMATEN ===
 
 VOORBEELD A - TABEL FORMAT (meerdere leveringen):
